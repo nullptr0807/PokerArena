@@ -1,0 +1,352 @@
+/**
+ * MCCFR implementation — External Sampling CFR for 2-player NLHE.
+ */
+
+#include "mccfr.h"
+#include "hand_abstraction.h"
+#include <algorithm>
+#include <array>
+#include <atomic>
+#include <bitset>
+#include <numeric>
+#include <random>
+#include <sstream>
+#include <fstream>
+#include <thread>
+#include <unordered_map>
+#include <vector>
+
+namespace poker {
+
+namespace {
+
+thread_local std::mt19937 rng{std::random_device{}()};
+
+enum AbsAction : int {
+    FOLD = 0, CHECK_CALL = 1, BET_HALF = 2,
+    BET_POT = 3, BET_2X = 4, ALL_IN = 5,
+};
+const char* ACTION_NAMES[] = {"f", "k", "h", "p", "o", "a"};
+
+struct CFRState {
+    std::array<std::array<int, 2>, 2> holes;
+    std::array<int, 5> board;
+    int board_count;
+    int pot;
+    int street;
+    int acting_player;
+    int bets_this_street;
+    bool terminal;
+    int winner;
+    std::string history;
+    std::array<int, 2> invested;
+    // Cached buckets per player per street (computed once per street transition)
+    std::array<std::array<int, 4>, 2> buckets; // [player][street]
+    int buckets_computed_street;  // highest street for which buckets are valid
+};
+
+CFRState deal_hand() {
+    CFRState s{};
+    std::array<int, 52> deck;
+    std::iota(deck.begin(), deck.end(), 0);
+    for (int i = 51; i > 0; --i) {
+        std::uniform_int_distribution<int> d(0, i);
+        std::swap(deck[i], deck[d(rng)]);
+    }
+    s.holes[0] = {deck[0], deck[1]};
+    s.holes[1] = {deck[2], deck[3]};
+    s.board = {deck[4], deck[5], deck[6], deck[7], deck[8]};
+    s.board_count = 0;
+    s.pot = 3;
+    s.invested = {1, 2};
+    s.street = 0;
+    s.acting_player = 0;
+    s.bets_this_street = 1;
+    s.terminal = false;
+    s.winner = -1;
+    // Precompute preflop buckets (no board needed)
+    std::vector<int> empty_board;
+    for (int p = 0; p < 2; ++p) {
+        s.buckets[p][0] = hand_to_bucket(s.holes[p], empty_board);
+    }
+    s.buckets_computed_street = 0;
+    return s;
+}
+
+std::vector<int> get_valid_actions(const CFRState& s) {
+    std::vector<int> actions;
+    if (s.bets_this_street > 0) actions.push_back(FOLD);
+    actions.push_back(CHECK_CALL);
+    if (s.bets_this_street < 3) {
+        actions.push_back(BET_HALF);
+        actions.push_back(BET_POT);
+    }
+    // All-in only as the 3rd+ raise (represents shove)
+    if (s.bets_this_street >= 2) actions.push_back(ALL_IN);
+    return actions;
+}
+
+void ensure_buckets(CFRState& s) {
+    if (s.street > s.buckets_computed_street) {
+        std::vector<int> bc(s.board.begin(), s.board.begin() + s.board_count);
+        for (int p = 0; p < 2; ++p) {
+            s.buckets[p][s.street] = hand_to_bucket(s.holes[p], bc);
+        }
+        s.buckets_computed_street = s.street;
+    }
+}
+
+// Encode info key as uint64: street(2bit) | bucket(8bit) | history_hash(54bit)
+uint64_t make_info_key(CFRState& s, int player) {
+    ensure_buckets(s);
+    int bucket = s.buckets[player][s.street];
+    // FNV-1a hash of history string
+    uint64_t h = 14695981039346656037ULL;
+    for (char c : s.history) {
+        h ^= static_cast<uint64_t>(c);
+        h *= 1099511628211ULL;
+    }
+    return (static_cast<uint64_t>(s.street) << 62)
+         | (static_cast<uint64_t>(bucket & 0xFF) << 54)
+         | (h & 0x003FFFFFFFFFFFFFULL);
+}
+
+CFRState apply_action(const CFRState& s, int action) {
+    CFRState next = s;
+    next.history += ACTION_NAMES[action];
+
+    if (action == FOLD) {
+        next.terminal = true;
+        next.winner = 1 - s.acting_player;
+        return next;
+    }
+    if (action == CHECK_CALL) {
+        int to_call = s.invested[1 - s.acting_player] - s.invested[s.acting_player];
+        next.invested[s.acting_player] += to_call;
+        next.pot += to_call;
+        bool street_ends = (s.bets_this_street == 0 && next.history.length() >= 2 &&
+                            next.history.back() == 'k' && next.history[next.history.size()-2] == 'k') ||
+                           (s.bets_this_street > 0);
+        // Simpler: if both players have acted and bets are matched
+        if (s.bets_this_street > 0 || (s.bets_this_street == 0 && s.acting_player == 1)) {
+            if (next.street == 3) {
+                next.terminal = true;
+                next.winner = 2;
+            } else {
+                next.street++;
+                if (next.street == 1) next.board_count = 3;
+                else if (next.street == 2) next.board_count = 4;
+                else next.board_count = 5;
+                next.bets_this_street = 0;
+                next.acting_player = 0;
+                next.history += "/";
+            }
+        } else {
+            next.acting_player = 1 - s.acting_player;
+        }
+        return next;
+    }
+    // Bet/raise
+    int bet = 0;
+    if (action == BET_HALF) bet = next.pot / 2;
+    else if (action == BET_POT) bet = next.pot;
+    else if (action == BET_2X) bet = next.pot * 2;
+    else if (action == ALL_IN) bet = 200;
+    bet = std::max(bet, 2);
+    next.invested[s.acting_player] += bet;
+    next.pot += bet;
+    next.bets_this_street++;
+    next.acting_player = 1 - s.acting_player;
+    return next;
+}
+
+double showdown_utility(const CFRState& s) {
+    std::vector<int> board(s.board.begin(), s.board.begin() + 5);
+    double ehs0 = compute_ehs(s.holes[0], board, 20);
+    double ehs1 = compute_ehs(s.holes[1], board, 20);
+    if (ehs0 > ehs1) return static_cast<double>(s.invested[1]);
+    if (ehs1 > ehs0) return -static_cast<double>(s.invested[0]);
+    return 0.0;
+}
+
+// Recursive CFR traversal (thread-safe via trainer's mutex)
+double cfr_traverse(
+    CFRState& state, int traverser,
+    double pi_t, double pi_o,
+    std::unordered_map<uint64_t, InfoNode>& nodes,
+    std::shared_mutex* mtx = nullptr
+) {
+    if (state.terminal) {
+        if (state.winner == 2) {
+            double u = showdown_utility(state);
+            return traverser == 0 ? u : -u;
+        }
+        double u = (state.winner == 0)
+            ? static_cast<double>(state.invested[1])
+            : -static_cast<double>(state.invested[0]);
+        return traverser == 0 ? u : -u;
+    }
+    if (state.history.size() > 15) return 0.0;
+
+    auto valid = get_valid_actions(state);
+    uint64_t key = make_info_key(state, state.acting_player);
+
+    // Get or create node (thread-safe if mtx provided)
+    InfoNode* node_ptr;
+    {
+        if (mtx) {
+            // Try read first
+            std::shared_lock<std::shared_mutex> rlock(*mtx);
+            auto it = nodes.find(key);
+            if (it != nodes.end()) {
+                node_ptr = &it->second;
+                rlock.unlock();
+            } else {
+                rlock.unlock();
+                std::unique_lock<std::shared_mutex> wlock(*mtx);
+                node_ptr = &nodes[key];  // insert
+            }
+        } else {
+            node_ptr = &nodes[key];
+        }
+    }
+    InfoNode& node = *node_ptr;
+    auto strategy = node.get_strategy();
+
+    if (state.acting_player == traverser) {
+        std::array<double, NUM_ACTIONS> au{};
+        double nu = 0;
+        for (int a : valid) {
+            CFRState next = apply_action(state, a);
+            au[a] = cfr_traverse(next, traverser, pi_t * strategy[a], pi_o, nodes, mtx);
+            nu += strategy[a] * au[a];
+        }
+        // Regret update — small race is OK (Hogwild)
+        for (int a : valid) {
+            node.regret_sum[a] += pi_o * (au[a] - nu);
+        }
+        return nu;
+    } else {
+        std::uniform_real_distribution<double> dist(0.0, 1.0);
+        double r = dist(rng), cumul = 0;
+        int sampled = valid.back();
+        for (int a : valid) {
+            cumul += strategy[a];
+            if (r < cumul) { sampled = a; break; }
+        }
+        // Strategy sum update — small race is OK (Hogwild)
+        for (int a : valid) {
+            node.strategy_sum[a] += pi_o * strategy[a];
+        }
+        CFRState next = apply_action(state, sampled);
+        return cfr_traverse(next, traverser, pi_t, pi_o * strategy[sampled], nodes, mtx);
+    }
+}
+
+} // anonymous namespace
+
+// ─── InfoNode ────────────────────────────────────────────
+
+std::array<double, NUM_ACTIONS> InfoNode::get_strategy() const {
+    std::array<double, NUM_ACTIONS> s{};
+    double ps = 0;
+    for (int a = 0; a < NUM_ACTIONS; ++a) { s[a] = std::max(regret_sum[a], 0.0); ps += s[a]; }
+    if (ps > 0) { for (auto& v : s) v /= ps; }
+    else std::fill(s.begin(), s.end(), 1.0 / NUM_ACTIONS);
+    return s;
+}
+
+std::array<double, NUM_ACTIONS> InfoNode::get_average_strategy() const {
+    std::array<double, NUM_ACTIONS> a{};
+    double t = std::accumulate(strategy_sum.begin(), strategy_sum.end(), 0.0);
+    if (t > 0) { for (int i = 0; i < NUM_ACTIONS; ++i) a[i] = strategy_sum[i] / t; }
+    else std::fill(a.begin(), a.end(), 1.0 / NUM_ACTIONS);
+    return a;
+}
+
+// ─── MCCFRTrainer ────────────────────────────────────────
+
+MCCFRTrainer::MCCFRTrainer(int np) : num_players_(np) {}
+
+void MCCFRTrainer::train(int64_t iterations) {
+    train_parallel(iterations, 1);
+}
+
+void MCCFRTrainer::train_parallel(int64_t iterations, int num_threads) {
+    if (num_threads <= 1) {
+        for (int64_t i = 0; i < iterations; ++i) {
+            for (int p = 0; p < 2; ++p) {
+                cfr_impl(p);
+            }
+        }
+        return;
+    }
+    std::atomic<int64_t> counter{0};
+    auto worker = [&]() {
+        while (true) {
+            int64_t idx = counter.fetch_add(1);
+            if (idx >= iterations) break;
+            for (int p = 0; p < 2; ++p) {
+                CFRState state = deal_hand();
+                cfr_traverse(state, p, 1.0, 1.0, nodes_, &nodes_mtx_);
+            }
+        }
+    };
+    std::vector<std::thread> threads;
+    threads.reserve(num_threads);
+    for (int t = 0; t < num_threads; ++t) {
+        threads.emplace_back(worker);
+    }
+    for (auto& th : threads) th.join();
+}
+
+double MCCFRTrainer::cfr_impl(int traverser) {
+    CFRState state = deal_hand();
+    return cfr_traverse(state, traverser, 1.0, 1.0, nodes_);
+}
+
+std::array<double, NUM_ACTIONS> MCCFRTrainer::query(const std::string& k) const {
+    // String-based query: hash the string key the same way engine_bridge uses it
+    // For now, uniform fallback — real queries should use query_u64
+    std::array<double, NUM_ACTIONS> u{};
+    std::fill(u.begin(), u.end(), 1.0 / NUM_ACTIONS);
+    return u;
+}
+
+std::array<double, NUM_ACTIONS> MCCFRTrainer::query_u64(uint64_t k) const {
+    auto it = nodes_.find(k);
+    if (it != nodes_.end()) return it->second.get_average_strategy();
+    std::array<double, NUM_ACTIONS> u{};
+    std::fill(u.begin(), u.end(), 1.0 / NUM_ACTIONS);
+    return u;
+}
+
+void MCCFRTrainer::save(const std::string& path) const {
+    std::ofstream out(path, std::ios::binary);
+    uint64_t n = nodes_.size();
+    out.write(reinterpret_cast<const char*>(&n), sizeof(n));
+    for (const auto& [key, node] : nodes_) {
+        out.write(reinterpret_cast<const char*>(&key), sizeof(key));
+        out.write(reinterpret_cast<const char*>(node.regret_sum.data()), sizeof(node.regret_sum));
+        out.write(reinterpret_cast<const char*>(node.strategy_sum.data()), sizeof(node.strategy_sum));
+    }
+}
+
+void MCCFRTrainer::load(const std::string& path) {
+    std::ifstream in(path, std::ios::binary);
+    if (!in) return;
+    uint64_t n = 0;
+    in.read(reinterpret_cast<char*>(&n), sizeof(n));
+    nodes_.clear();
+    nodes_.reserve(n);
+    for (uint64_t i = 0; i < n; ++i) {
+        uint64_t key = 0;
+        in.read(reinterpret_cast<char*>(&key), sizeof(key));
+        InfoNode node{};
+        in.read(reinterpret_cast<char*>(node.regret_sum.data()), sizeof(node.regret_sum));
+        in.read(reinterpret_cast<char*>(node.strategy_sum.data()), sizeof(node.strategy_sum));
+        nodes_[key] = node;
+    }
+}
+
+} // namespace poker

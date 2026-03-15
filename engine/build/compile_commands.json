@@ -1,0 +1,62 @@
+[
+{
+  "directory": "/Users/gexin/openclaw/projects/PokerArena/engine/build",
+  "command": "/usr/bin/c++  -I/Users/gexin/openclaw/projects/PokerArena/engine/include -O3 -march=native -DNDEBUG -std=gnu++20 -o CMakeFiles/poker_engine.dir/src/card.cpp.o -c /Users/gexin/openclaw/projects/PokerArena/engine/src/card.cpp",
+  "file": "/Users/gexin/openclaw/projects/PokerArena/engine/src/card.cpp",
+  "output": "CMakeFiles/poker_engine.dir/src/card.cpp.o"
+},
+{
+  "directory": "/Users/gexin/openclaw/projects/PokerArena/engine/build",
+  "command": "/usr/bin/c++  -I/Users/gexin/openclaw/projects/PokerArena/engine/include -O3 -march=native -DNDEBUG -std=gnu++20 -o CMakeFiles/poker_engine.dir/src/hand_eval.cpp.o -c /Users/gexin/openclaw/projects/PokerArena/engine/src/hand_eval.cpp",
+  "file": "/Users/gexin/openclaw/projects/PokerArena/engine/src/hand_eval.cpp",
+  "output": "CMakeFiles/poker_engine.dir/src/hand_eval.cpp.o"
+},
+{
+  "directory": "/Users/gexin/openclaw/projects/PokerArena/engine/build",
+  "command": "/usr/bin/c++  -I/Users/gexin/openclaw/projects/PokerArena/engine/include -O3 -march=native -DNDEBUG -std=gnu++20 -o CMakeFiles/poker_engine.dir/src/abstraction.cpp.o -c /Users/gexin/openclaw/projects/PokerArena/engine/src/abstraction.cpp",
+  "file": "/Users/gexin/openclaw/projects/PokerArena/engine/src/abstraction.cpp",
+  "output": "CMakeFiles/poker_engine.dir/src/abstraction.cpp.o"
+},
+{
+  "directory": "/Users/gexin/openclaw/projects/PokerArena/engine/build",
+  "command": "/usr/bin/c++  -I/Users/gexin/openclaw/projects/PokerArena/engine/include -O3 -march=native -DNDEBUG -std=gnu++20 -o CMakeFiles/poker_engine.dir/src/game_tree.cpp.o -c /Users/gexin/openclaw/projects/PokerArena/engine/src/game_tree.cpp",
+  "file": "/Users/gexin/openclaw/projects/PokerArena/engine/src/game_tree.cpp",
+  "output": "CMakeFiles/poker_engine.dir/src/game_tree.cpp.o"
+},
+{
+  "directory": "/Users/gexin/openclaw/projects/PokerArena/engine/build",
+  "command": "/usr/bin/c++  -I/Users/gexin/openclaw/projects/PokerArena/engine/include -O3 -march=native -DNDEBUG -std=gnu++20 -o CMakeFiles/poker_engine.dir/src/cfr.cpp.o -c /Users/gexin/openclaw/projects/PokerArena/engine/src/cfr.cpp",
+  "file": "/Users/gexin/openclaw/projects/PokerArena/engine/src/cfr.cpp",
+  "output": "CMakeFiles/poker_engine.dir/src/cfr.cpp.o"
+},
+{
+  "directory": "/Users/gexin/openclaw/projects/PokerArena/engine/build",
+  "command": "/usr/bin/c++  -I/Users/gexin/openclaw/projects/PokerArena/engine/include -O3 -march=native -DNDEBUG -std=gnu++20 -o CMakeFiles/poker_engine.dir/src/subgame.cpp.o -c /Users/gexin/openclaw/projects/PokerArena/engine/src/subgame.cpp",
+  "file": "/Users/gexin/openclaw/projects/PokerArena/engine/src/subgame.cpp",
+  "output": "CMakeFiles/poker_engine.dir/src/subgame.cpp.o"
+},
+{
+  "directory": "/Users/gexin/openclaw/projects/PokerArena/engine/build",
+  "command": "/usr/bin/c++  -I/Users/gexin/openclaw/projects/PokerArena/engine/include -O3 -march=native -DNDEBUG -std=gnu++20 -o CMakeFiles/poker_engine.dir/src/strategy.cpp.o -c /Users/gexin/openclaw/projects/PokerArena/engine/src/strategy.cpp",
+  "file": "/Users/gexin/openclaw/projects/PokerArena/engine/src/strategy.cpp",
+  "output": "CMakeFiles/poker_engine.dir/src/strategy.cpp.o"
+},
+{
+  "directory": "/Users/gexin/openclaw/projects/PokerArena/engine/build",
+  "command": "/usr/bin/c++  -I/Users/gexin/openclaw/projects/PokerArena/engine/include -O3 -march=native -DNDEBUG -std=gnu++20 -o CMakeFiles/train.dir/src/train_main.cpp.o -c /Users/gexin/openclaw/projects/PokerArena/engine/src/train_main.cpp",
+  "file": "/Users/gexin/openclaw/projects/PokerArena/engine/src/train_main.cpp",
+  "output": "CMakeFiles/train.dir/src/train_main.cpp.o"
+},
+{
+  "directory": "/Users/gexin/openclaw/projects/PokerArena/engine/build",
+  "command": "/usr/bin/c++  -I/Users/gexin/openclaw/projects/PokerArena/engine/include -O3 -march=native -DNDEBUG -std=gnu++20 -o CMakeFiles/decide.dir/src/decide_main.cpp.o -c /Users/gexin/openclaw/projects/PokerArena/engine/src/decide_main.cpp",
+  "file": "/Users/gexin/openclaw/projects/PokerArena/engine/src/decide_main.cpp",
+  "output": "CMakeFiles/decide.dir/src/decide_main.cpp.o"
+},
+{
+  "directory": "/Users/gexin/openclaw/projects/PokerArena/engine/build",
+  "command": "/usr/bin/c++  -I/Users/gexin/openclaw/projects/PokerArena/engine/include -O3 -march=native -DNDEBUG -std=gnu++20 -o CMakeFiles/engine_tests.dir/tests/test_main.cpp.o -c /Users/gexin/openclaw/projects/PokerArena/engine/tests/test_main.cpp",
+  "file": "/Users/gexin/openclaw/projects/PokerArena/engine/tests/test_main.cpp",
+  "output": "CMakeFiles/engine_tests.dir/tests/test_main.cpp.o"
+}
+]

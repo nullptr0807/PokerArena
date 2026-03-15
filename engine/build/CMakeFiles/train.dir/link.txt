@@ -1,0 +1,1 @@
+/usr/bin/c++ -O3 -march=native -DNDEBUG -Wl,-search_paths_first -Wl,-headerpad_max_install_names CMakeFiles/train.dir/src/train_main.cpp.o -o train  libpoker_engine.a
