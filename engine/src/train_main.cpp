@@ -130,6 +130,10 @@ int main(int argc, char* argv[]) {
     config.tree_config.num_players = config.num_players;
     poker::MCCFRTrainer trainer(config);
 
+    // Load pre-trained abstraction into trainer
+    trainer.load_abstraction(abs_path);
+    std::cout << "Loaded abstraction into trainer (EHS² bucketing active)." << std::endl;
+
     // Resume from checkpoint if specified
     if (!resume_path.empty()) {
         std::cout << "\nResuming from " << resume_path << std::endl;

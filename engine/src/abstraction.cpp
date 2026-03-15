@@ -75,8 +75,7 @@ int HandAbstraction::postflop_bucket(
     int n_buckets = num_buckets(street);
 
     if (!trained_) {
-        // Fast deterministic bucketing: use hand rank as proxy for EHS
-        // This avoids expensive MC sampling during CFR training
+        // Fast deterministic bucketing: use hand rank mapped to buckets
         const auto& eval = get_evaluator();
         uint16_t rank = eval.evaluate(hole, board, board_size);
         // rank range is roughly 1-7500, lower = better
@@ -85,28 +84,33 @@ int HandAbstraction::postflop_bucket(
         return std::clamp(bucket, 0, n_buckets - 1);
     }
 
-    // Find nearest centroid using EHS
-    double ehs = effective_hand_strength_squared(hole, board, board_size, config_.ehs_samples);
+    // Trained mode: use hand rank to find nearest centroid
+    // (fast approximation — avoids MC sampling during CFR iterations)
+    const auto& eval = get_evaluator();
+    uint16_t rank = eval.evaluate(hole, board, board_size);
+    // Convert rank to approximate EHS² (0-1 range, lower rank = better = higher EHS)
+    double approx_ehs = 1.0 - std::min(static_cast<double>(rank), 7500.0) / 7500.0;
 
     int street_idx = static_cast<int>(street) - 1; // flop=0, turn=1, river=2
     if (street_idx < 0 || street_idx >= 3) return 0;
 
     const auto& cents = centroids_[street_idx];
     if (cents.empty()) {
-        int bucket = static_cast<int>(ehs * n_buckets);
+        int bucket = static_cast<int>(approx_ehs * n_buckets);
         return std::clamp(bucket, 0, n_buckets - 1);
     }
 
-    int best = 0;
-    double best_dist = 1e9;
-    // centroids_[street_idx] is a vector<vector<double>>
-    // Each centroid is a single EHS value for simplicity
-    for (int i = 0; i < static_cast<int>(cents.size()); ++i) {
-        double d = std::abs(ehs - cents[i][0]);
-        if (d < best_dist) {
-            best_dist = d;
-            best = i;
-        }
+    // Binary search on sorted centroids (much faster than linear scan)
+    int lo = 0, hi = static_cast<int>(cents.size()) - 1;
+    while (lo < hi) {
+        int mid = (lo + hi) / 2;
+        if (cents[mid][0] < approx_ehs) lo = mid + 1;
+        else hi = mid;
+    }
+    // Check neighbors
+    int best = lo;
+    if (lo > 0 && std::abs(cents[lo-1][0] - approx_ehs) < std::abs(cents[lo][0] - approx_ehs)) {
+        best = lo - 1;
     }
     return best;
 }

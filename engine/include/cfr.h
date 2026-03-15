@@ -77,6 +77,9 @@ public:
 
     explicit MCCFRTrainer(Config config);
 
+    // Load a pre-trained abstraction (must call before train())
+    bool load_abstraction(const std::string& path);
+
     // Run training for N iterations
     void train(int iterations);
 

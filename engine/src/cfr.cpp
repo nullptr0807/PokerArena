@@ -5,6 +5,7 @@
 #include <chrono>
 #include <cmath>
 #include <fstream>
+#include <iomanip>
 #include <iostream>
 #include <numeric>
 
@@ -49,6 +50,10 @@ MCCFRTrainer::MCCFRTrainer(Config config)
 {
     config_.tree_config.num_players = config_.num_players;
     // Don't build tree in constructor — it's only needed for train()
+}
+
+bool MCCFRTrainer::load_abstraction(const std::string& path) {
+    return abstraction_.load(path);
 }
 
 void MCCFRTrainer::sample_deal(Card hands[][2], Card board[5], int num_players) {
@@ -277,9 +282,18 @@ void MCCFRTrainer::train(int iterations) {
         if ((iter + 1) % config_.checkpoint_every == 0) {
             auto now = std::chrono::steady_clock::now();
             double elapsed = std::chrono::duration<double>(now - start).count();
-            std::cout << "Iteration " << total_iterations_
+            double pct = 100.0 * (iter + 1) / iterations;
+            double iters_per_sec = (iter + 1) / elapsed;
+            double eta_sec = (iterations - iter - 1) / iters_per_sec;
+            int eta_h = static_cast<int>(eta_sec / 3600);
+            int eta_m = static_cast<int>((eta_sec - eta_h * 3600) / 60);
+            int eta_s = static_cast<int>(eta_sec) % 60;
+            std::cout << "[" << std::fixed << std::setprecision(1) << pct << "%] "
+                      << "Iter " << total_iterations_
                       << " | InfoSets: " << info_sets_.size()
-                      << " | Time: " << elapsed << "s"
+                      << " | " << std::setprecision(0) << iters_per_sec << " it/s"
+                      << " | Elapsed: " << std::setprecision(1) << elapsed << "s"
+                      << " | ETA: " << eta_h << "h" << eta_m << "m" << eta_s << "s"
                       << std::endl;
         }
 
