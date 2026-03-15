@@ -4,4 +4,8 @@ dist/
 *.o
 *.bin
 *.dat
+*.pyc
+__pycache__/
 .DS_Store
+venv/
+.env
