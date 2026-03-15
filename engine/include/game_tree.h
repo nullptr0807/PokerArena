@@ -33,6 +33,7 @@ struct GameNode {
     int current_bet;     // highest bet this street
     int last_raiser;     // last player who raised (-1 if none)
     int num_raises;      // raises this street (for cap)
+    uint32_t node_id = 0;  // unique ID assigned during tree build
 
     // For terminal nodes
     double payoffs[6];   // payoff per player (in BBs)
@@ -70,6 +71,7 @@ public:
 
 private:
     Config config_;
+    uint32_t next_node_id_ = 0;
 
     void build_recursive(
         GameNode* node,

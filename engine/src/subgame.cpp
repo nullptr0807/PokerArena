@@ -90,7 +90,7 @@ void SubgameSolver::solve(
 
         InfoSetKey root_key;
         root_key.bucket = bucket;
-        root_key.history = {static_cast<uint8_t>(board_size)};
+        root_key.node_id = 0; // TODO: map to actual game tree node
 
         auto& info = local_info_sets[root_key];
         info.num_actions = static_cast<int>(subtree->valid_actions.size());
@@ -123,7 +123,7 @@ void SubgameSolver::solve(
         static_cast<Street>(std::min(board_size / 2, 3)),
         hole, board, board_size
     );
-    root_key.history = {static_cast<uint8_t>(board_size)};
+    root_key.node_id = 0; // TODO: map to actual game tree node
 
     auto it = local_info_sets.find(root_key);
     if (it != local_info_sets.end()) {

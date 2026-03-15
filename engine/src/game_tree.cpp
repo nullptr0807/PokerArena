@@ -159,6 +159,7 @@ void GameTreeBuilder::build_recursive(
 
     node->type = NodeType::PLAYER;
     node->player = acting_player;
+    node->node_id = next_node_id_++;
     node->street = street;
     node->pot = pot;
     node->current_bet = current_bet;

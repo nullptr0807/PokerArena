@@ -25,19 +25,18 @@ enum class CFRVariant {
 
 struct InfoSetKey {
     int bucket;                      // hand abstraction bucket
-    std::vector<uint8_t> history;    // action sequence encoding
+    uint32_t node_id;                // unique game tree node ID
 
     bool operator==(const InfoSetKey& other) const {
-        return bucket == other.bucket && history == other.history;
+        return bucket == other.bucket && node_id == other.node_id;
     }
 };
 
 struct InfoSetKeyHash {
     size_t operator()(const InfoSetKey& k) const {
+        // Fast combine: bucket and node_id
         size_t h = std::hash<int>{}(k.bucket);
-        for (auto a : k.history) {
-            h ^= std::hash<uint8_t>{}(a) + 0x9e3779b9 + (h << 6) + (h >> 2);
-        }
+        h ^= std::hash<uint32_t>{}(k.node_id) + 0x9e3779b9 + (h << 6) + (h >> 2);
         return h;
     }
 };

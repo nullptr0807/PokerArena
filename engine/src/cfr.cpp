@@ -79,14 +79,7 @@ InfoSetKey MCCFRTrainer::make_key(
 ) const {
     InfoSetKey key;
     key.bucket = abstraction_.get_bucket(node->street, hole, board, board_size);
-
-    // Encode action history from root to this node
-    // For now, use a simplified encoding based on node properties
-    // In practice, you'd trace the path from root
-    key.history.push_back(static_cast<uint8_t>(node->street));
-    key.history.push_back(static_cast<uint8_t>(node->pot & 0xFF));
-    key.history.push_back(static_cast<uint8_t>(node->current_bet & 0xFF));
-
+    key.node_id = node->node_id;
     return key;
 }
 
@@ -325,6 +318,10 @@ bool MCCFRTrainer::save(const std::string& path) const {
     std::ofstream ofs(path, std::ios::binary);
     if (!ofs) return false;
 
+    // Version header for forward compatibility
+    uint32_t version = 2;
+    ofs.write(reinterpret_cast<const char*>(&version), sizeof(version));
+
     // Write metadata
     int64_t num_sets = info_sets_.size();
     ofs.write(reinterpret_cast<const char*>(&total_iterations_), sizeof(total_iterations_));
@@ -332,13 +329,7 @@ bool MCCFRTrainer::save(const std::string& path) const {
 
     // Write each info set
     for (const auto& [key, data] : info_sets_) {
-        // Key
-        ofs.write(reinterpret_cast<const char*>(&key.bucket), sizeof(key.bucket));
-        int hist_size = static_cast<int>(key.history.size());
-        ofs.write(reinterpret_cast<const char*>(&hist_size), sizeof(hist_size));
-        ofs.write(reinterpret_cast<const char*>(key.history.data()), hist_size);
-
-        // Data
+        ofs.write(reinterpret_cast<const char*>(&key), sizeof(InfoSetKey));
         ofs.write(reinterpret_cast<const char*>(&data), sizeof(InfoSetData));
     }
 
@@ -349,6 +340,14 @@ bool MCCFRTrainer::load(const std::string& path) {
     std::ifstream ifs(path, std::ios::binary);
     if (!ifs) return false;
 
+    uint32_t version;
+    ifs.read(reinterpret_cast<char*>(&version), sizeof(version));
+    if (version != 2) {
+        std::cerr << "Incompatible checkpoint version " << version
+                  << " (expected 2). Starting fresh." << std::endl;
+        return false;
+    }
+
     int64_t num_sets;
     ifs.read(reinterpret_cast<char*>(&total_iterations_), sizeof(total_iterations_));
     ifs.read(reinterpret_cast<char*>(&num_sets), sizeof(num_sets));
@@ -358,11 +357,7 @@ bool MCCFRTrainer::load(const std::string& path) {
 
     for (int64_t i = 0; i < num_sets; ++i) {
         InfoSetKey key;
-        ifs.read(reinterpret_cast<char*>(&key.bucket), sizeof(key.bucket));
-        int hist_size;
-        ifs.read(reinterpret_cast<char*>(&hist_size), sizeof(hist_size));
-        key.history.resize(hist_size);
-        ifs.read(reinterpret_cast<char*>(key.history.data()), hist_size);
+        ifs.read(reinterpret_cast<char*>(&key), sizeof(InfoSetKey));
 
         InfoSetData data;
         ifs.read(reinterpret_cast<char*>(&data), sizeof(InfoSetData));

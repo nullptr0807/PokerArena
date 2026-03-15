@@ -119,7 +119,7 @@ Decision StrategyManager::decide(
 
         InfoSetKey key;
         key.bucket = abstraction_.get_bucket(street, hole, board, board_size);
-        key.history = {static_cast<uint8_t>(street), static_cast<uint8_t>(pot & 0xFF)};
+        key.node_id = 0; // TODO: map to actual game tree node
 
         blueprint_.get_strategy(key, strategy);
     }
