@@ -58,7 +58,7 @@ public:
         int max_raises_per_street = 4;
 
         // Bet sizing abstractions (fractions of pot)
-        std::vector<double> bet_sizes = {0.33, 0.75, 1.5};
+        std::vector<double> bet_sizes = {0.25, 0.5, 0.75, 1.0, 1.5};
     };
 
     explicit GameTreeBuilder(Config config);

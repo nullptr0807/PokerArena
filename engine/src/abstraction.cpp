@@ -86,7 +86,7 @@ int HandAbstraction::postflop_bucket(
     }
 
     // Find nearest centroid using EHS
-    double ehs = effective_hand_strength(hole, board, board_size, config_.ehs_samples);
+    double ehs = effective_hand_strength_squared(hole, board, board_size, config_.ehs_samples);
 
     int street_idx = static_cast<int>(street) - 1; // flop=0, turn=1, river=2
     if (street_idx < 0 || street_idx >= 3) return 0;
@@ -138,7 +138,7 @@ void HandAbstraction::train(int num_iterations) {
             Card board[5];
             for (int i = 0; i < board_size; ++i) board[i] = deck[2 + i];
 
-            double ehs = effective_hand_strength(hole, board, board_size, config_.ehs_samples);
+            double ehs = effective_hand_strength_squared(hole, board, board_size, config_.ehs_samples);
             samples.push_back(ehs);
         }
 

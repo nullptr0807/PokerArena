@@ -250,8 +250,65 @@ double effective_hand_strength_squared(
     int board_size,
     int num_samples
 ) {
-    double ehs = effective_hand_strength(hole, board, board_size, num_samples);
-    return ehs * ehs;  // Simplified EHS²
+    if (board_size >= 5) {
+        // River: no more cards to come, EHS² == EHS
+        return effective_hand_strength(hole, board, board_size, num_samples);
+    }
+
+    const auto& eval = get_evaluator();
+    std::mt19937 rng(std::random_device{}());
+
+    CardSet used = card_bit(hole[0]) | card_bit(hole[1]);
+    for (int i = 0; i < board_size; ++i) used |= card_bit(board[i]);
+
+    std::vector<Card> deck;
+    deck.reserve(52);
+    for (int c = 0; c < 52; ++c) {
+        if (!(used & card_bit(c))) deck.push_back(c);
+    }
+
+    // Hand potential: track transitions from ahead/behind/tied → win/lose/tie
+    // HP[0] = was ahead, HP[1] = was behind, HP[2] = was tied
+    double hp_win[3] = {}, hp_total[3] = {};
+
+    for (int s = 0; s < num_samples; ++s) {
+        std::shuffle(deck.begin(), deck.end(), rng);
+
+        Card opp_hole[2] = {deck[0], deck[1]};
+
+        // Current board evaluation
+        uint16_t my_now = eval.evaluate(hole, board, board_size);
+        uint16_t opp_now = eval.evaluate(opp_hole, board, board_size);
+
+        int state; // 0=ahead, 1=behind, 2=tied
+        if (my_now < opp_now) state = 0;
+        else if (my_now > opp_now) state = 1;
+        else state = 2;
+
+        // Deal remaining board cards
+        Card full_board[5];
+        for (int i = 0; i < board_size; ++i) full_board[i] = board[i];
+        int idx = 2;
+        for (int i = board_size; i < 5; ++i) full_board[i] = deck[idx++];
+
+        uint16_t my_final = eval.evaluate(hole, full_board, 5);
+        uint16_t opp_final = eval.evaluate(opp_hole, full_board, 5);
+
+        hp_total[state] += 1.0;
+        if (my_final < opp_final) hp_win[state] += 1.0;
+        else if (my_final == opp_final) hp_win[state] += 0.5;
+    }
+
+    // Positive potential: P(win at river | behind now)
+    double ppot = (hp_total[1] > 0) ? hp_win[1] / hp_total[1] : 0.0;
+    // Negative potential: P(lose at river | ahead now)
+    double npot = (hp_total[0] > 0) ? 1.0 - hp_win[0] / hp_total[0] : 0.0;
+
+    // Current hand strength
+    double hs = effective_hand_strength(hole, board, board_size, num_samples / 2);
+
+    // EHS² = HS × (1 - Npot) + (1 - HS) × Ppot
+    return hs * (1.0 - npot) + (1.0 - hs) * ppot;
 }
 
 } // namespace poker
