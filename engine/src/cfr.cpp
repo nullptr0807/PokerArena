@@ -136,8 +136,14 @@ double MCCFRTrainer::cfr_traverse(
         if (i_win && !tied) {
             return node->pot - node->bets[traverser];
         } else if (tied) {
-            // Split pot (simplified)
-            return 0;
+            // Split pot among tied players
+            int num_tied = 1; // traverser
+            for (int i = 0; i < node->num_players; ++i) {
+                if (i == traverser || node->folded[i]) continue;
+                uint16_t r = eval.evaluate(hands[i], board, actual_board_size);
+                if (r == my_rank) num_tied++;
+            }
+            return static_cast<double>(node->pot) / num_tied - node->bets[traverser];
         } else {
             return -node->bets[traverser];
         }
@@ -180,20 +186,26 @@ double MCCFRTrainer::cfr_traverse(
             node_util += strategy[a] * action_utils[a];
         }
 
-        // Update regrets
+        // Update regrets (External Sampling: no opp_reach weighting)
         for (int a = 0; a < num_actions; ++a) {
             double regret = action_utils[a] - node_util;
-            // Weight by opponent reach probability
-            double opp_reach = 1.0;
-            for (int p = 0; p < config_.num_players; ++p) {
-                if (p != traverser) opp_reach *= reach_prob[p];
-            }
-            info.regret_sum[a] += opp_reach * regret;
+            info.regret_sum[a] += regret;
 
             // CFR+: immediately floor negative regrets to zero
             if (config_.variant == CFRVariant::CFR_PLUS) {
                 info.regret_sum[a] = std::max(info.regret_sum[a], 0.0);
             }
+        }
+
+        // Update strategy sum at traverser node (correct for External Sampling)
+        double my_reach = reach_prob[traverser];
+        double weight = my_reach;
+        if (config_.variant == CFRVariant::CFR_PLUS ||
+            config_.variant == CFRVariant::LINEAR) {
+            weight *= static_cast<double>(total_iterations_ + 1);
+        }
+        for (int a = 0; a < num_actions; ++a) {
+            info.strategy_sum[a] += weight * strategy[a];
         }
 
         return node_util;
@@ -205,17 +217,6 @@ double MCCFRTrainer::cfr_traverse(
         for (int a = 0; a < num_actions; ++a) {
             cumulative += strategy[a];
             if (r <= cumulative) { sampled = a; break; }
-        }
-
-        // Update strategy sum (weighted by variant)
-        double strategy_weight = reach_prob[acting];
-        if (config_.variant == CFRVariant::CFR_PLUS ||
-            config_.variant == CFRVariant::LINEAR) {
-            // Linear weighting: multiply by iteration number t
-            strategy_weight *= static_cast<double>(total_iterations_ + 1);
-        }
-        for (int a = 0; a < num_actions; ++a) {
-            info.strategy_sum[a] += strategy_weight * strategy[a];
         }
 
         double new_reach[6];

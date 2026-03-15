@@ -73,6 +73,9 @@ private:
     Config config_;
     uint32_t next_node_id_ = 0;
 
+public:
+    uint32_t node_count() const { return next_node_id_; }
+
     void build_recursive(
         GameNode* node,
         Street street,
