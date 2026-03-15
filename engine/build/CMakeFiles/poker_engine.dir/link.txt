@@ -1,2 +1,0 @@
-/usr/bin/ar qc libpoker_engine.a CMakeFiles/poker_engine.dir/src/card.cpp.o CMakeFiles/poker_engine.dir/src/hand_eval.cpp.o CMakeFiles/poker_engine.dir/src/abstraction.cpp.o CMakeFiles/poker_engine.dir/src/game_tree.cpp.o CMakeFiles/poker_engine.dir/src/cfr.cpp.o CMakeFiles/poker_engine.dir/src/subgame.cpp.o CMakeFiles/poker_engine.dir/src/strategy.cpp.o
-/usr/bin/ranlib libpoker_engine.a

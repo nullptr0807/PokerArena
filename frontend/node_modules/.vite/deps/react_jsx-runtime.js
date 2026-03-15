@@ -1,5 +1,0 @@
-import {
-  require_jsx_runtime
-} from "./chunk-CZOZVI57.js";
-import "./chunk-FPU2ABES.js";
-export default require_jsx_runtime();
