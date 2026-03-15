@@ -11,6 +11,15 @@
 
 namespace poker {
 
+// ─── CFR Variant ─────────────────────────────────────────────
+
+enum class CFRVariant {
+    VANILLA,    // Standard MCCFR
+    CFR_PLUS,   // CFR+: floor negative regrets to 0 each iteration
+    LINEAR,     // Linear CFR: weight by iteration t
+    DCFR,       // Discounted CFR: configurable discount factors
+};
+
 // ─── Information Set ─────────────────────────────────────────
 // An information set is what a player knows: their bucket + action history
 
@@ -57,6 +66,11 @@ public:
         int iterations = 1000000;
         int checkpoint_every = 100000;
         std::string checkpoint_dir = "data/";
+        CFRVariant variant = CFRVariant::CFR_PLUS;  // default to CFR+
+        // DCFR parameters (only used when variant == DCFR)
+        double dcfr_alpha = 1.5;   // positive regret discount: t^α / (t^α + 1)
+        double dcfr_beta  = 0.0;   // negative regret discount: t^β / (t^β + 1)
+        double dcfr_gamma = 2.0;   // strategy sum discount:    (t / (t+1))^γ
         HandAbstraction::Config abstraction_config;
         GameTreeBuilder::Config tree_config;
     };

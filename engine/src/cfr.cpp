@@ -191,6 +191,11 @@ double MCCFRTrainer::cfr_traverse(
                 if (p != traverser) opp_reach *= reach_prob[p];
             }
             info.regret_sum[a] += opp_reach * regret;
+
+            // CFR+: immediately floor negative regrets to zero
+            if (config_.variant == CFRVariant::CFR_PLUS) {
+                info.regret_sum[a] = std::max(info.regret_sum[a], 0.0);
+            }
         }
 
         return node_util;
@@ -204,9 +209,15 @@ double MCCFRTrainer::cfr_traverse(
             if (r <= cumulative) { sampled = a; break; }
         }
 
-        // Update strategy sum
+        // Update strategy sum (weighted by variant)
+        double strategy_weight = reach_prob[acting];
+        if (config_.variant == CFRVariant::CFR_PLUS ||
+            config_.variant == CFRVariant::LINEAR) {
+            // Linear weighting: multiply by iteration number t
+            strategy_weight *= static_cast<double>(total_iterations_ + 1);
+        }
         for (int a = 0; a < num_actions; ++a) {
-            info.strategy_sum[a] += reach_prob[acting] * strategy[a];
+            info.strategy_sum[a] += strategy_weight * strategy[a];
         }
 
         double new_reach[6];
@@ -243,6 +254,24 @@ void MCCFRTrainer::train(int iterations) {
         }
 
         total_iterations_++;
+
+        // ─── DCFR: apply discount factors to all info sets ────────
+        if (config_.variant == CFRVariant::DCFR) {
+            double t = static_cast<double>(total_iterations_);
+            double pos_disc = std::pow(t, config_.dcfr_alpha) /
+                              (std::pow(t, config_.dcfr_alpha) + 1.0);
+            double neg_disc = std::pow(t, config_.dcfr_beta) /
+                              (std::pow(t, config_.dcfr_beta) + 1.0);
+            double strat_disc = std::pow(t / (t + 1.0), config_.dcfr_gamma);
+
+            for (auto& [key, data] : info_sets_) {
+                for (int a = 0; a < data.num_actions; ++a) {
+                    data.regret_sum[a] *= (data.regret_sum[a] > 0)
+                                           ? pos_disc : neg_disc;
+                    data.strategy_sum[a] *= strat_disc;
+                }
+            }
+        }
 
         // Progress logging
         if ((iter + 1) % config_.checkpoint_every == 0) {
