@@ -17,12 +17,16 @@ StrategyManager::StrategyManager(Config config)
 bool StrategyManager::load_blueprint(const std::string& path) {
     bool ok = blueprint_.load(path);
     if (ok) {
-        // Build the abstract game tree for node_id resolution
-        GameTreeBuilder builder(config_.tree_config);
-        game_tree_ = builder.build();
-        std::cerr << "Game tree built: " << builder.node_count() << " nodes" << std::endl;
+        rebuild_tree();
     }
     return ok;
+}
+
+void StrategyManager::rebuild_tree() {
+    GameTreeBuilder builder(config_.tree_config);
+    game_tree_ = builder.build();
+    std::cerr << "Game tree built: " << builder.node_count() << " nodes"
+              << " (" << config_.tree_config.num_players << " players)" << std::endl;
 }
 
 uint32_t StrategyManager::resolve_node_id(const std::vector<ActionType>& action_history) const {
@@ -134,6 +138,12 @@ Decision StrategyManager::decide(
     const std::vector<ActionType>& action_history
 ) {
     double strategy[NUM_ACTIONS] = {};
+
+    // Ensure game tree matches current player count
+    if (game_tree_ && num_players != config_.tree_config.num_players) {
+        config_.tree_config.num_players = num_players;
+        rebuild_tree();
+    }
 
     if (difficulty == Difficulty::ADVANCED) {
         // Real-time subgame solving with full game state

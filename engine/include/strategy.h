@@ -38,6 +38,17 @@ public:
     // Load pre-trained blueprint (also builds game tree for node mapping)
     bool load_blueprint(const std::string& path);
 
+    // Rebuild game tree (call after changing tree_config, e.g. num_players)
+    void rebuild_tree();
+
+    // Update tree config for different player counts
+    void set_num_players(int n) {
+        if (n != config_.tree_config.num_players) {
+            config_.tree_config.num_players = n;
+            rebuild_tree();
+        }
+    }
+
     // Get a decision for the current game state.
     // action_history: sequence of actions taken so far this hand,
     // used to traverse the game tree and find the correct node_id
