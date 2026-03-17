@@ -15,7 +15,44 @@ StrategyManager::StrategyManager(Config config)
 {}
 
 bool StrategyManager::load_blueprint(const std::string& path) {
-    return blueprint_.load(path);
+    bool ok = blueprint_.load(path);
+    if (ok) {
+        // Build the abstract game tree for node_id resolution
+        GameTreeBuilder builder(config_.tree_config);
+        game_tree_ = builder.build();
+        std::cerr << "Game tree built: " << builder.node_count() << " nodes" << std::endl;
+    }
+    return ok;
+}
+
+uint32_t StrategyManager::resolve_node_id(const std::vector<ActionType>& action_history) const {
+    if (!game_tree_ || action_history.empty()) return 0;
+
+    const GameNode* node = game_tree_.get();
+    for (ActionType action : action_history) {
+        if (node->type == NodeType::TERMINAL) return 0;
+
+        // Find child matching this action
+        bool found = false;
+        int action_idx = static_cast<int>(action);
+        for (size_t i = 0; i < node->valid_actions.size(); ++i) {
+            if (node->valid_actions[i] == action && i < node->children.size() && node->children[i]) {
+                node = node->children[i].get();
+                found = true;
+                break;
+            }
+        }
+        if (!found) {
+            // Action not in tree — could be a sizing mismatch.
+            // Fall back to first valid child as approximation.
+            if (!node->children.empty() && node->children[0]) {
+                node = node->children[0].get();
+            } else {
+                return 0;
+            }
+        }
+    }
+    return node->node_id;
 }
 
 void StrategyManager::apply_difficulty(
@@ -93,7 +130,8 @@ Decision StrategyManager::decide(
     int player_bet,
     int player,
     int num_players,
-    const std::vector<ActionType>& valid_actions
+    const std::vector<ActionType>& valid_actions,
+    const std::vector<ActionType>& action_history
 ) {
     double strategy[NUM_ACTIONS] = {};
 
@@ -121,10 +159,7 @@ Decision StrategyManager::decide(
 
         InfoSetKey key;
         key.bucket = abstraction_.get_bucket(street, hole, board, board_size);
-        // TODO: proper node_id mapping from actual game history
-        // For now, use bucket as a rough proxy — this means we lose
-        // position/action-history info, but it's better than always 0
-        key.node_id = 0;
+        key.node_id = resolve_node_id(action_history);
 
         blueprint_.get_strategy(key, strategy);
     }

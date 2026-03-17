@@ -162,6 +162,7 @@ int main() {
             int player = get_json_int(line, "player");
             int num_players = get_json_int(line, "num_players");
             auto valid_strs = get_json_string_array(line, "valid_actions");
+            auto history_strs = get_json_string_array(line, "action_history");
 
             poker::Card hole[2] = {
                 poker::string_to_card(hole_strs[0]),
@@ -183,10 +184,15 @@ int main() {
                 valid_actions.push_back(parse_action_type(s));
             }
 
+            std::vector<poker::ActionType> action_history;
+            for (const auto& s : history_strs) {
+                action_history.push_back(parse_action_type(s));
+            }
+
             auto decision = manager.decide(
                 difficulty, hole, board, static_cast<int>(board_strs.size()),
                 pot, stacks, current_bet, player_bet, player, num_players,
-                valid_actions
+                valid_actions, action_history
             );
 
             std::cout << R"({"action":")" << poker::action_name(decision.action)
