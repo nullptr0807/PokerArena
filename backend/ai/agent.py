@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import secrets
 from enum import Enum, auto
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 
 class Difficulty(Enum):
@@ -29,6 +29,7 @@ class GameContext:
     num_players_in_hand: int
     street: str  # PREFLOP, FLOP, TURN, RIVER
     position: str  # early, middle, late, blinds
+    action_history: list[str] = field(default_factory=list)  # normalized action sequence (button=seat0)
 
 
 def _random_float() -> float:

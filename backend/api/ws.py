@@ -199,6 +199,7 @@ class GameRoom:
                 num_players_in_hand=self.engine.num_in_hand,
                 street=self.engine.street.name,
                 position=self._get_position(ai_idx),
+                action_history=self._normalized_action_history(),
             )
             valid = [a.value for a in self.engine.get_valid_actions()]
             if not valid:
@@ -295,6 +296,44 @@ class GameRoom:
         elif relative <= 2 * n // 3:
             return "early"
         return "middle"
+
+    def _normalized_action_history(self) -> list[str]:
+        """Extract action sequence from engine action_log, excluding blinds.
+
+        The C++ game tree is built with button=0, so the action order
+        is already correct — we just need the action types in order.
+        The tree internally tracks whose turn it is at each node,
+        so the sequence of action types is sufficient.
+        """
+        history = []
+        for entry in self.engine.action_log:
+            action = entry.get("action", "")
+            if action == "blind":
+                continue  # blinds are baked into the tree structure
+            # Map game actions to C++ abstract actions
+            if action == "fold":
+                history.append("fold")
+            elif action == "check":
+                history.append("check")
+            elif action == "call":
+                history.append("call")
+            elif action == "raise":
+                # Map raise amount to abstract sizing
+                amount = entry.get("amount", 0)
+                pot = sum(p.bet_this_hand for p in self.engine.players)
+                if pot > 0:
+                    ratio = amount / pot
+                    if ratio <= 0.5:
+                        history.append("raise_33")
+                    elif ratio <= 1.1:
+                        history.append("raise_75")
+                    else:
+                        history.append("raise_150")
+                else:
+                    history.append("raise_75")  # default to pot-sized
+            elif action == "all_in":
+                history.append("all_in")
+        return history
 
 
 # Active game rooms (simple in-memory store)
