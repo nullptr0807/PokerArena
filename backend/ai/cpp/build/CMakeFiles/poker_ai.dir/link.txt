@@ -1,2 +1,0 @@
-/usr/bin/ar qc libpoker_ai.a CMakeFiles/poker_ai.dir/src/mccfr.cpp.o CMakeFiles/poker_ai.dir/src/hand_abstraction.cpp.o CMakeFiles/poker_ai.dir/src/subgame_solver.cpp.o
-/usr/bin/ranlib libpoker_ai.a
