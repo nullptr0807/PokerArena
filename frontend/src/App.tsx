@@ -4,20 +4,25 @@ import { Setup } from './components/Setup'
 import { Table } from './components/Table'
 import { StatsOverlay } from './components/StatsOverlay'
 import { RunItMultiple } from './components/RunItMultiple'
+import { DebugPanel } from './components/DebugPanel'
 import type { GameConfig } from './types'
 
 export default function App() {
   const {
     connected, gameState, error, runItResults, turnSecondsLeft,
-    aiThinking, actionLog,
+    aiThinking, actionLog, debugEvents,
     createGame, startHand, act, runItMultiple,
   } = useGameSocket()
   const [gameStarted, setGameStarted] = useState(false)
   const [showStats, setShowStats] = useState(false)
+  const [debugMode, setDebugMode] = useState(false)
+  const [showDebug, setShowDebug] = useState(false)
 
   const handleCreateGame = (config: GameConfig) => {
     createGame(config)
     setGameStarted(true)
+    setDebugMode(config.debug_mode ?? false)
+    setShowDebug(config.debug_mode ?? false)
     setTimeout(() => startHand(), 300)
   }
 
@@ -100,6 +105,35 @@ export default function App() {
       >
         📊 Stats
       </button>
+
+      {/* Debug toggle button */}
+      {debugMode && (
+        <button
+          onClick={() => setShowDebug((v) => !v)}
+          style={{
+            position: 'fixed',
+            top: 16,
+            right: 100,
+            padding: '6px 14px',
+            borderRadius: 10,
+            background: showDebug ? '#f59e0b' : 'var(--bg-card)',
+            color: showDebug ? '#000' : '#f59e0b',
+            fontSize: 13,
+            fontWeight: 500,
+            border: '1px solid rgba(245,158,11,0.3)',
+            zIndex: 10,
+          }}
+        >
+          🐛 Debug
+        </button>
+      )}
+
+      {/* Debug Panel */}
+      <DebugPanel
+        events={debugEvents}
+        visible={showDebug && debugMode}
+        onClose={() => setShowDebug(false)}
+      />
 
       {/* Run It Multiple Times */}
       <RunItMultiple

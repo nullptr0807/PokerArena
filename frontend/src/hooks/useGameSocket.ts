@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import type { ActionLogEntry, GameConfig, GameState, WSMessage } from '../types'
+import type { ActionLogEntry, DebugEvent, GameConfig, GameState, WSMessage } from '../types'
 
 export function useGameSocket() {
   const wsRef = useRef<WebSocket | null>(null)
@@ -15,6 +15,7 @@ export function useGameSocket() {
   const [turnSecondsLeft, setTurnSecondsLeft] = useState<number | null>(null)
   const [aiThinking, setAiThinking] = useState<Record<number, string | null>>({})
   const [actionLog, setActionLog] = useState<ActionLogEntry[]>([])
+  const [debugEvents, setDebugEvents] = useState<DebugEvent[]>([])
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const deadlineRef = useRef<number>(0)
 
@@ -70,6 +71,9 @@ export function useGameSocket() {
         case 'action_log':
           setActionLog(msg.data)
           break
+        case 'debug_event':
+          setDebugEvents((prev) => [...prev, msg.data])
+          break
         case 'run_it_results':
           setRunItResults(msg.data)
           break
@@ -114,6 +118,7 @@ export function useGameSocket() {
   const startHand = useCallback(() => {
     setRunItResults(null)
     setActionLog([])
+    setDebugEvents([])
     setAiThinking({})
     stopCountdown()
     send({ type: 'start_hand' })
@@ -143,6 +148,7 @@ export function useGameSocket() {
     turnSecondsLeft,
     aiThinking,
     actionLog,
+    debugEvents,
     createGame,
     startHand,
     act,

@@ -8,6 +8,7 @@ interface SetupProps {
 export const Setup: FC<SetupProps> = ({ onStart }) => {
   const [numPlayers, setNumPlayers] = useState(2)
   const [difficulties, setDifficulties] = useState<string[]>(['normal'])
+  const [debugMode, setDebugMode] = useState(false)
 
   const handleNumChange = (n: number) => {
     setNumPlayers(n)
@@ -106,6 +107,28 @@ export const Setup: FC<SetupProps> = ({ onStart }) => {
         ))}
       </div>
 
+      {/* Debug mode toggle */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        <label
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
+            cursor: 'pointer',
+            fontSize: 13,
+            color: debugMode ? '#f59e0b' : 'var(--text-secondary)',
+          }}
+        >
+          <input
+            type="checkbox"
+            checked={debugMode}
+            onChange={(e) => setDebugMode(e.target.checked)}
+            style={{ accentColor: '#f59e0b' }}
+          />
+          🐛 Debug Mode
+        </label>
+      </div>
+
       {/* Start button */}
       <button
         onClick={() =>
@@ -115,6 +138,7 @@ export const Setup: FC<SetupProps> = ({ onStart }) => {
             big_blind: 2,
             starting_chips: 400,
             ai_difficulties: difficulties,
+            debug_mode: debugMode,
           })
         }
         style={{

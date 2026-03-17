@@ -4,7 +4,10 @@ from __future__ import annotations
 
 import asyncio
 import json
+import os
 import time
+from datetime import datetime
+from pathlib import Path
 from typing import Any
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
@@ -15,6 +18,9 @@ from ai.agent import AIAgent, Difficulty, GameContext
 router = APIRouter()
 
 TURN_TIMEOUT = 30  # seconds
+
+# Debug log directory
+DEBUG_LOG_DIR = Path(__file__).parent.parent / "logs" / "hands"
 
 
 class GameRoom:
@@ -27,6 +33,7 @@ class GameRoom:
         big_blind: int = 2,
         starting_chips: int = 400,
         ai_difficulties: list[str] | None = None,
+        debug_mode: bool = False,
     ) -> None:
         self.engine = GameEngine(
             num_players=num_players,
@@ -34,6 +41,8 @@ class GameRoom:
             big_blind=big_blind,
             starting_chips=starting_chips,
         )
+        self.debug_mode = debug_mode
+        self.debug_log: list[dict] = []  # per-hand debug events
         # Set player names
         self.engine.players[0].name = "You"
         for i in range(1, num_players):
@@ -83,7 +92,56 @@ class GameRoom:
     def _inject_action_log(self, state: dict) -> dict:
         """Add action_log to state dict."""
         state["action_log"] = self.action_log
+        if self.debug_mode:
+            state["debug_mode"] = True
+            # Reveal all AI hole cards in debug mode
+            from game.deck import card_to_str
+            for pdata in state.get("players", []):
+                idx = pdata["index"]
+                if pdata["hole_cards"] is None and idx < len(self.engine.players):
+                    cards = self.engine.players[idx].hole_cards
+                    if cards:
+                        pdata["hole_cards"] = [card_to_str(c) for c in cards]
         return state
+
+    async def _debug_event(self, event: dict) -> None:
+        """Record and broadcast a debug event."""
+        if not self.debug_mode:
+            return
+        event["timestamp"] = time.time()
+        self.debug_log.append(event)
+        await self.send({"type": "debug_event", "data": event})
+
+    def _save_hand_log(self) -> None:
+        """Save the debug log for the current hand to a JSON file."""
+        if not self.debug_mode or not self.debug_log:
+            return
+        DEBUG_LOG_DIR.mkdir(parents=True, exist_ok=True)
+        hand_num = self.engine.hand_number
+        ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+        path = DEBUG_LOG_DIR / f"hand_{hand_num}_{ts}.json"
+        log_data = {
+            "hand_number": hand_num,
+            "num_players": self.engine.num_players,
+            "button": self.engine.button,
+            "board": [self.engine.deck._cards[i] if i < len(self.engine.board) else None for i in range(5)],
+            "players": [
+                {
+                    "index": p.index,
+                    "name": p.name,
+                    "hole_cards": p.hole_cards,
+                    "starting_chips": p.chips + p.bet_this_hand,
+                    "difficulty": self.ai_agents[p.index - 1].difficulty.value if p.index > 0 and p.index - 1 < len(self.ai_agents) else "human",
+                }
+                for p in self.engine.players
+            ],
+            "action_log": self.action_log,
+            "debug_events": self.debug_log,
+        }
+        try:
+            path.write_text(json.dumps(log_data, indent=2, default=str))
+        except Exception as e:
+            print(f"Failed to save hand log: {e}")
 
     def _start_turn_timer(self) -> None:
         """Start a 30s countdown for the current player."""
@@ -116,8 +174,28 @@ class GameRoom:
     async def start_hand(self) -> dict:
         """Start a new hand and return state."""
         self.action_log = []
+        self.debug_log = []
         state = self.engine.start_hand()
         self._append_street()  # PREFLOP
+
+        # Debug: log hand start with all player info
+        if self.debug_mode:
+            await self._debug_event({
+                "type": "hand_start",
+                "hand_number": self.engine.hand_number,
+                "button": self.engine.button,
+                "players": [
+                    {
+                        "index": p.index,
+                        "name": p.name,
+                        "chips": p.chips + p.bet_this_hand,
+                        "hole_cards": p.hole_cards,
+                        "difficulty": self.ai_agents[p.index - 1].difficulty.value if p.index > 0 and p.index - 1 < len(self.ai_agents) else "human",
+                    }
+                    for p in self.engine.players
+                ],
+            })
+
         self._inject_action_log(state)
         await self.send({"type": "state", "data": state})
         await self._broadcast_action_log()
@@ -164,6 +242,8 @@ class GameRoom:
 
         if state["street"] not in ("WAITING",):
             await self._process_ai_turns()
+        else:
+            self._save_hand_log()
 
         # Start timer for next human turn
         if self.engine.street not in (Street.WAITING, Street.SHOWDOWN):
@@ -184,9 +264,20 @@ class GameRoom:
             if ai_idx < 1 or ai_idx - 1 >= len(self.ai_agents):
                 break
             agent = self.ai_agents[ai_idx - 1]
+            t_start = time.time()
 
-            # Stage 1: Analyzing (visible for 0.5s)
+            # Stage 1: Analyzing
             await self.send({"type": "ai_thinking", "player": ai_idx, "stage": "analyzing"})
+            await self._debug_event({
+                "type": "ai_start",
+                "player": ai_idx,
+                "name": player.name,
+                "difficulty": agent.difficulty.value,
+                "street": self.engine.street.name,
+                "hole_cards": player.hole_cards,
+                "pot": sum(p.bet_this_hand for p in self.engine.players),
+                "current_bet": self.engine.current_bet,
+            })
             await asyncio.sleep(0.5)
 
             ctx = GameContext(
@@ -206,25 +297,61 @@ class GameRoom:
                 await self.send({"type": "ai_thinking", "player": ai_idx, "stage": None})
                 break
 
-            # Stage 2: Computing (visible for 0.5-0.8s depending on difficulty)
-            computing_label = "solving subgame" if agent.difficulty == Difficulty.ADVANCED else "computing"
+            # Stage 2: Computing
+            if agent.difficulty == Difficulty.ADVANCED:
+                stage_label = "subgame_solve" if ctx.street in ("TURN", "RIVER") else "blueprint_lookup"
+            elif agent.difficulty == Difficulty.MEDIUM:
+                stage_label = "blueprint_lookup"
+            else:
+                stage_label = "heuristic"
+
+            computing_label = "solving subgame" if stage_label == "subgame_solve" else "computing"
             await self.send({"type": "ai_thinking", "player": ai_idx, "stage": computing_label})
+            await self._debug_event({
+                "type": "ai_stage",
+                "player": ai_idx,
+                "stage": stage_label,
+                "action_history": ctx.action_history,
+                "valid_actions": valid,
+                "position": ctx.position,
+            })
             compute_delay = 0.8 if agent.difficulty == Difficulty.ADVANCED else 0.5
             await asyncio.sleep(compute_delay)
 
             try:
+                t_compute = time.time()
                 decision = await asyncio.wait_for(
                     asyncio.get_event_loop().run_in_executor(
                         None, agent.decide, ctx, valid
                     ),
                     timeout=10.0,
                 )
+                compute_ms = round((time.time() - t_compute) * 1000)
             except asyncio.TimeoutError:
                 print(f"AI {ai_idx} timed out, folding")
                 decision = {"action": "fold" if "fold" in valid else valid[0], "amount": 0}
+                compute_ms = 10000
             except Exception as e:
                 print(f"AI decide error: {e}")
                 decision = {"action": valid[0], "amount": 0}
+                compute_ms = 0
+
+            total_ms = round((time.time() - t_start) * 1000)
+            await self._debug_event({
+                "type": "ai_decision",
+                "player": ai_idx,
+                "name": player.name,
+                "difficulty": agent.difficulty.value,
+                "stage": stage_label,
+                "action": decision["action"],
+                "amount": decision.get("amount", 0),
+                "compute_ms": compute_ms,
+                "total_ms": total_ms,
+                "hole_cards": player.hole_cards,
+                "street": self.engine.street.name,
+                "pot": ctx.pot,
+                "action_history": ctx.action_history,
+            })
 
             # Show "deciding" stage briefly before clearing
             await self.send({"type": "ai_thinking", "player": ai_idx, "stage": "deciding"})
@@ -282,6 +409,7 @@ class GameRoom:
             await self.send({"type": "state", "data": state})
 
             if state["street"] == "WAITING":
+                self._save_hand_log()
                 break
 
     def _get_position(self, player_idx: int) -> str:
@@ -360,6 +488,7 @@ async def game_ws(ws: WebSocket) -> None:
                 small_blind = msg.get("small_blind", 1)
                 big_blind = msg.get("big_blind", 2)
                 starting_chips = msg.get("starting_chips", 400)
+                debug_mode = msg.get("debug_mode", False)
 
                 room = GameRoom(
                     num_players=num_players,
@@ -367,6 +496,7 @@ async def game_ws(ws: WebSocket) -> None:
                     big_blind=big_blind,
                     starting_chips=starting_chips,
                     ai_difficulties=difficulties,
+                    debug_mode=debug_mode,
                 )
                 room.ws = ws
                 await ws.send_json({

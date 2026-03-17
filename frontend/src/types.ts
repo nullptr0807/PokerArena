@@ -68,6 +68,36 @@ export interface GameConfig {
   big_blind: number
   starting_chips: number
   ai_difficulties: string[]
+  debug_mode?: boolean
+}
+
+export interface DebugEvent {
+  type: string
+  timestamp?: number
+  player?: number
+  name?: string
+  difficulty?: string
+  stage?: string
+  street?: string
+  hole_cards?: number[] | string[]
+  action?: string
+  amount?: number
+  compute_ms?: number
+  total_ms?: number
+  pot?: number
+  current_bet?: number
+  action_history?: string[]
+  valid_actions?: string[]
+  position?: string
+  hand_number?: number
+  button?: number
+  players?: Array<{
+    index: number
+    name: string
+    chips: number
+    hole_cards: number[] | string[]
+    difficulty: string
+  }>
 }
 
 export type WSMessage =
@@ -79,5 +109,6 @@ export type WSMessage =
   | { type: 'timeout_fold'; player: number }
   | { type: 'ai_thinking'; player: number; stage: string | null }
   | { type: 'action_log'; data: ActionLogEntry[] }
+  | { type: 'debug_event'; data: DebugEvent }
   | { type: 'error'; message: string }
   | { type: 'pong' }
