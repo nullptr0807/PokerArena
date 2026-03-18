@@ -67,6 +67,8 @@ int main(int argc, char* argv[]) {
             config.abstraction_config.river_buckets = std::stoi(argv[++i]);
         } else if (arg == "--ehs-samples" && i + 1 < argc) {
             config.abstraction_config.ehs_samples = std::stoi(argv[++i]);
+        } else if (arg == "--log-every" && i + 1 < argc) {
+            config.log_every = std::stoi(argv[++i]);
         } else if (arg == "--help" || arg == "-h") {
             std::cout << "Usage: train [options]\n"
                       << "\nGeneral:\n"
@@ -80,6 +82,8 @@ int main(int argc, char* argv[]) {
                       << "  --turn-buckets N     Turn buckets (default: 500)\n"
                       << "  --river-buckets N    River buckets (default: 800)\n"
                       << "  --ehs-samples N      EHS² MC samples (default: 300)\n"
+                      << "\nLogging:\n"
+                      << "  --log-every N        Log progress every N iterations (default: 10000)\n"
                       << "\nOutput dir is auto-generated with parameters in the name\n"
                       << "unless --output is specified. All runs saved under runs/\n";
             return 0;
@@ -93,6 +97,9 @@ int main(int argc, char* argv[]) {
 
     // Create output dir
     std::filesystem::create_directories(config.checkpoint_dir);
+
+    // Set log file path
+    config.log_file = config.checkpoint_dir + "/training.log";
 
     // Print config summary
     std::cout << "\n── Config ──────────────────────────────" << std::endl;

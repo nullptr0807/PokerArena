@@ -4,10 +4,12 @@
 #include <algorithm>
 #include <chrono>
 #include <cmath>
+#include <ctime>
 #include <fstream>
 #include <iomanip>
 #include <iostream>
 #include <numeric>
+#include <sstream>
 
 namespace poker {
 
@@ -237,6 +239,62 @@ void MCCFRTrainer::train(int iterations) {
         game_tree_ = builder.build();
     }
 
+    // ─── Open log file ───────────────────────────────────────
+    std::ofstream log_fs;
+    if (!config_.log_file.empty()) {
+        log_fs.open(config_.log_file, std::ios::app);
+        if (!log_fs.is_open()) {
+            std::cerr << "Warning: could not open log file: " << config_.log_file << std::endl;
+        }
+    }
+
+    // Helper: write to both stdout and log file
+    auto log = [&](const std::string& msg) {
+        std::cout << msg << std::endl;
+        if (log_fs.is_open()) {
+            log_fs << msg << std::endl;
+            log_fs.flush();
+        }
+    };
+
+    // Helper: get current timestamp string
+    auto timestamp = []() -> std::string {
+        auto now = std::chrono::system_clock::now();
+        auto t = std::chrono::system_clock::to_time_t(now);
+        char buf[32];
+        std::strftime(buf, sizeof(buf), "%Y-%m-%d %H:%M:%S", std::localtime(&t));
+        return std::string(buf);
+    };
+
+    // ─── Log training header ─────────────────────────────────
+    {
+        std::ostringstream hdr;
+        hdr << "\n══════════════════════════════════════════════════\n"
+            << "[" << timestamp() << "] Training started\n"
+            << "  Players:        " << config_.num_players << "\n"
+            << "  Target iters:   " << config_.iterations << "\n"
+            << "  Remaining:      " << iterations << "\n"
+            << "  Starting from:  " << total_iterations_ << "\n"
+            << "  Checkpoint:     every " << config_.checkpoint_every << "\n"
+            << "  Log interval:   every " << config_.log_every << "\n"
+            << "  Variant:        " << (config_.variant == CFRVariant::CFR_PLUS ? "CFR+" :
+                                        config_.variant == CFRVariant::DCFR ? "DCFR" :
+                                        config_.variant == CFRVariant::LINEAR ? "Linear" : "Vanilla") << "\n"
+            << "  Flop buckets:   " << config_.abstraction_config.flop_buckets << "\n"
+            << "  Turn buckets:   " << config_.abstraction_config.turn_buckets << "\n"
+            << "  River buckets:  " << config_.abstraction_config.river_buckets << "\n"
+            << "  Bet sizes:      [";
+        for (size_t i = 0; i < config_.tree_config.bet_sizes.size(); ++i) {
+            if (i > 0) hdr << ", ";
+            hdr << config_.tree_config.bet_sizes[i] << "x";
+        }
+        hdr << "]\n"
+            << "══════════════════════════════════════════════════";
+        log(hdr.str());
+    }
+
+    int log_every = config_.log_every > 0 ? config_.log_every : config_.checkpoint_every;
+
     auto start = std::chrono::steady_clock::now();
 
     for (int iter = 0; iter < iterations; ++iter) {
@@ -272,8 +330,8 @@ void MCCFRTrainer::train(int iterations) {
             }
         }
 
-        // Progress logging
-        if ((iter + 1) % config_.checkpoint_every == 0) {
+        // ─── Progress logging ────────────────────────────────────
+        if ((iter + 1) % log_every == 0) {
             auto now = std::chrono::steady_clock::now();
             double elapsed = std::chrono::duration<double>(now - start).count();
             double pct = 100.0 * (iter + 1) / iterations;
@@ -282,21 +340,47 @@ void MCCFRTrainer::train(int iterations) {
             int eta_h = static_cast<int>(eta_sec / 3600);
             int eta_m = static_cast<int>((eta_sec - eta_h * 3600) / 60);
             int eta_s = static_cast<int>(eta_sec) % 60;
-            std::cout << "[" << std::fixed << std::setprecision(1) << pct << "%] "
-                      << "Iter " << total_iterations_
-                      << " | InfoSets: " << info_sets_.size()
-                      << " | " << std::setprecision(0) << iters_per_sec << " it/s"
-                      << " | Elapsed: " << std::setprecision(1) << elapsed << "s"
-                      << " | ETA: " << eta_h << "h" << eta_m << "m" << eta_s << "s"
-                      << std::endl;
+
+            // Memory estimate: each info set ~128 bytes + hash overhead
+            double mem_mb = info_sets_.size() * 160.0 / (1024 * 1024);
+
+            std::ostringstream msg;
+            msg << "[" << timestamp() << "] "
+                << "[" << std::fixed << std::setprecision(1) << pct << "%] "
+                << "Iter " << total_iterations_
+                << " | InfoSets: " << info_sets_.size()
+                << " | " << std::setprecision(0) << iters_per_sec << " it/s"
+                << " | Elapsed: " << std::setprecision(1) << elapsed << "s"
+                << " | ETA: " << eta_h << "h" << eta_m << "m" << eta_s << "s"
+                << " | Mem: ~" << std::setprecision(1) << mem_mb << "MB";
+            log(msg.str());
         }
 
-        // Checkpoint
+        // ─── Checkpoint ──────────────────────────────────────────
         if ((iter + 1) % config_.checkpoint_every == 0 && !config_.checkpoint_dir.empty()) {
             std::string path = config_.checkpoint_dir + "/checkpoint_" +
                               std::to_string(total_iterations_) + ".bin";
             save(path);
+            log("[" + timestamp() + "] Checkpoint saved: " + path);
         }
+    }
+
+    // ─── Training complete ───────────────────────────────────
+    {
+        auto end = std::chrono::steady_clock::now();
+        double total_sec = std::chrono::duration<double>(end - start).count();
+        int h = static_cast<int>(total_sec / 3600);
+        int m = static_cast<int>((total_sec - h * 3600) / 60);
+        int s = static_cast<int>(total_sec) % 60;
+
+        std::ostringstream msg;
+        msg << "[" << timestamp() << "] Training complete!\n"
+            << "  Total iterations: " << total_iterations_ << "\n"
+            << "  Info sets:        " << info_sets_.size() << "\n"
+            << "  Total time:       " << h << "h" << m << "m" << s << "s\n"
+            << "  Avg speed:        " << std::fixed << std::setprecision(0)
+            << iterations / total_sec << " it/s";
+        log(msg.str());
     }
 }
 

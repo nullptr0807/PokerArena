@@ -315,8 +315,6 @@ class GameRoom:
                 "valid_actions": valid,
                 "position": ctx.position,
             })
-            compute_delay = 0.8 if agent.difficulty == Difficulty.ADVANCED else 0.5
-            await asyncio.sleep(compute_delay)
 
             try:
                 t_compute = time.time()
@@ -347,6 +345,8 @@ class GameRoom:
                 "amount": decision.get("amount", 0),
                 "compute_ms": compute_ms,
                 "total_ms": total_ms,
+                "iterations": decision.pop("_iterations", None),
+                "action_probs": decision.pop("_probs", None),
                 "hole_cards": player.hole_cards,
                 "street": self.engine.street.name,
                 "pot": ctx.pot,

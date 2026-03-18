@@ -28,49 +28,45 @@ export default function App() {
 
   if (!connected) {
     return (
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          height: '100%',
-          flexDirection: 'column',
-          gap: 12,
-        }}
-      >
-        <div
-          style={{
-            width: 32,
-            height: 32,
-            border: '3px solid var(--accent)',
-            borderTopColor: 'transparent',
-            borderRadius: '50%',
-            animation: 'spin 1s linear infinite',
-          }}
-        />
-        <span style={{ color: 'var(--text-secondary)' }}>
-          Connecting to server...
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        height: '100%',
+        flexDirection: 'column',
+        gap: 16,
+      }}>
+        <div style={{
+          width: 36,
+          height: 36,
+          border: '2px solid var(--accent)',
+          borderTopColor: 'transparent',
+          borderRadius: '50%',
+          animation: 'spin 0.8s linear infinite',
+        }} />
+        <span style={{ color: 'var(--text-muted)', fontSize: 14, letterSpacing: '-0.01em' }}>
+          连接服务器中...
         </span>
-        <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
       </div>
     )
   }
 
   if (error) {
     return (
-      <div
-        style={{
-          position: 'fixed',
-          top: 16,
-          right: 16,
-          background: 'var(--danger)',
-          color: '#fff',
-          padding: '8px 16px',
-          borderRadius: 8,
-          fontSize: 13,
-          zIndex: 100,
-        }}
-      >
+      <div style={{
+        position: 'fixed',
+        top: 16,
+        right: 16,
+        background: 'rgba(244, 63, 94, 0.9)',
+        backdropFilter: 'blur(8px)',
+        color: '#fff',
+        padding: '10px 20px',
+        borderRadius: 12,
+        fontSize: 13,
+        fontWeight: 600,
+        zIndex: 100,
+        border: '1px solid rgba(244,63,94,0.3)',
+      }}>
         {error}
       </div>
     )
@@ -86,56 +82,55 @@ export default function App() {
     <>
       <Table state={gameState} onAction={act} onNewHand={startHand} onQuit={() => setGameStarted(false)} turnSecondsLeft={turnSecondsLeft} aiThinking={aiThinking} actionLog={actionLog} />
 
-      {/* Stats button */}
-      <button
-        onClick={() => setShowStats(true)}
-        style={{
-          position: 'fixed',
-          top: 16,
-          right: 16,
-          padding: '6px 14px',
-          borderRadius: 10,
-          background: 'var(--bg-card)',
-          color: 'var(--text-secondary)',
-          fontSize: 13,
-          fontWeight: 500,
-          border: '1px solid var(--border)',
-          zIndex: 10,
-        }}
-      >
-        📊 Stats
-      </button>
-
-      {/* Debug toggle button */}
-      {debugMode && (
+      {/* Top-right buttons */}
+      <div style={{
+        position: 'fixed',
+        top: 12,
+        right: 16,
+        display: 'flex',
+        gap: 8,
+        zIndex: 10,
+      }}>
+        {debugMode && (
+          <button
+            onClick={() => setShowDebug((v) => !v)}
+            style={{
+              padding: '6px 14px',
+              borderRadius: 10,
+              background: showDebug ? 'rgba(251,191,36,0.15)' : 'var(--glass)',
+              color: showDebug ? '#fbbf24' : 'var(--text-muted)',
+              fontSize: 12,
+              fontWeight: 600,
+              border: '1px solid var(--border)',
+              backdropFilter: 'blur(8px)',
+            }}
+          >
+            Debug
+          </button>
+        )}
         <button
-          onClick={() => setShowDebug((v) => !v)}
+          onClick={() => setShowStats(true)}
           style={{
-            position: 'fixed',
-            top: 16,
-            right: 100,
             padding: '6px 14px',
             borderRadius: 10,
-            background: showDebug ? '#f59e0b' : 'var(--bg-card)',
-            color: showDebug ? '#000' : '#f59e0b',
-            fontSize: 13,
-            fontWeight: 500,
-            border: '1px solid rgba(245,158,11,0.3)',
-            zIndex: 10,
+            background: 'var(--glass)',
+            color: 'var(--text-muted)',
+            fontSize: 12,
+            fontWeight: 600,
+            border: '1px solid var(--border)',
+            backdropFilter: 'blur(8px)',
           }}
         >
-          🐛 Debug
+          统计
         </button>
-      )}
+      </div>
 
-      {/* Debug Panel */}
       <DebugPanel
         events={debugEvents}
         visible={showDebug && debugMode}
         onClose={() => setShowDebug(false)}
       />
 
-      {/* Run It Multiple Times */}
       <RunItMultiple
         visible={isAllInShowdown}
         onRun={runItMultiple}

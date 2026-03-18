@@ -10,7 +10,7 @@ echo "🃏 Starting PokerArena..."
 echo "  → Starting backend (port 8000)..."
 cd backend
 source venv/bin/activate
-python -m uvicorn api.server:app --host 0.0.0.0 --port 8000 &
+python -m uvicorn api.server:app --host 0.0.0.0 --port 8000 --reload &
 BACKEND_PID=$!
 cd ..
 

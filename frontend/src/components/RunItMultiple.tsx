@@ -31,57 +31,67 @@ export const RunItMultiple: FC<RunItProps> = ({
           bottom: 80,
           left: '50%',
           transform: 'translateX(-50%)',
-          background: 'rgba(0,0,0,0.9)',
-          backdropFilter: 'blur(12px)',
-          borderRadius: 16,
-          padding: '20px 28px',
+          background: 'rgba(9, 9, 11, 0.9)',
+          backdropFilter: 'blur(24px)',
+          borderRadius: 20,
+          padding: '24px 32px',
           zIndex: 20,
-          minWidth: 320,
+          minWidth: 340,
           textAlign: 'center',
+          border: '1px solid var(--border-light)',
+          boxShadow: '0 16px 48px rgba(0,0,0,0.5)',
         }}
       >
-        <p style={{ fontSize: 15, fontWeight: 600, marginBottom: 12 }}>
-          All-In Showdown — Run It Multiple Times?
+        <p style={{ fontSize: 15, fontWeight: 700, marginBottom: 14, letterSpacing: '-0.01em' }}>
+          All-In Showdown
+        </p>
+        <p style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 16 }}>
+          选择发牌次数
         </p>
 
         {!results && (
           <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
             {[1, 2, 3].map((n) => (
-              <button
+              <motion.button
                 key={n}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
                 onClick={() => onRun(n)}
                 style={{
-                  padding: '8px 20px',
-                  borderRadius: 10,
-                  fontSize: 14,
-                  fontWeight: 600,
-                  background: n === 1 ? 'var(--accent)' : 'var(--bg-card)',
-                  color: n === 1 ? '#fff' : 'var(--text-primary)',
-                  border: '1px solid var(--border)',
+                  padding: '8px 22px',
+                  borderRadius: 12,
+                  fontSize: 13,
+                  fontWeight: 700,
+                  background: n === 1
+                    ? 'linear-gradient(135deg, var(--accent), #059669)'
+                    : 'var(--glass)',
+                  color: n === 1 ? '#000' : 'var(--text-primary)',
+                  border: n === 1 ? 'none' : '1px solid var(--border)',
                 }}
               >
-                {n === 1 ? 'Run Once' : `Run ${n}x`}
-              </button>
+                {n === 1 ? '发一次' : `发 ${n} 次`}
+              </motion.button>
             ))}
           </div>
         )}
 
         {results && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             {results.map((run, ri) => (
               <motion.div
                 key={ri}
-                initial={{ opacity: 0, x: -20 }}
+                initial={{ opacity: 0, x: -16 }}
                 animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: ri * 0.3 }}
+                transition={{ delay: ri * 0.25 }}
                 style={{
-                  background: 'var(--bg-card)',
-                  borderRadius: 12,
+                  background: 'var(--glass)',
+                  borderRadius: 14,
                   padding: '12px 16px',
+                  border: '1px solid var(--border)',
                 }}
               >
-                <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 6 }}>
-                  Run {ri + 1}
+                <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 6, fontWeight: 600 }}>
+                  第 {ri + 1} 次
                 </div>
                 <div style={{ display: 'flex', gap: 4, justifyContent: 'center', marginBottom: 8 }}>
                   {run.board.map((c, ci) => (
@@ -89,9 +99,11 @@ export const RunItMultiple: FC<RunItProps> = ({
                   ))}
                 </div>
                 {run.winners.map((w, wi) => (
-                  <div key={wi} style={{ fontSize: 13, fontWeight: 500 }}>
-                    {playerNames[w.player] ?? `Player ${w.player}`} wins {w.amount}
-                    {w.hand_rank ? ` — ${w.hand_rank}` : ''}
+                  <div key={wi} style={{ fontSize: 13, fontWeight: 600 }}>
+                    <span style={{ color: 'var(--accent)' }}>{playerNames[w.player] ?? `Player ${w.player}`}</span>
+                    <span style={{ color: 'var(--text-muted)' }}> 赢得 </span>
+                    <span style={{ color: '#fbbf24', fontFamily: 'var(--font-mono)' }}>{w.amount}</span>
+                    {w.hand_rank && <span style={{ color: 'var(--text-secondary)', fontSize: 11 }}> ({w.hand_rank})</span>}
                   </div>
                 ))}
               </motion.div>

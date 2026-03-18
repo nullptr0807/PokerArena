@@ -21,10 +21,10 @@ class PlayerStats:
     
     @property
     def bb_per_hand(self) -> float:
-        """Average profit per hand in big blinds."""
+        """BB/100 — standard winrate (profit per 100 hands in big blinds)."""
         if self.hands_played == 0:
             return 0.0
-        return self.total_profit_bb / self.hands_played
+        return (self.total_profit_bb / self.hands_played) * 100.0
     
     def record_hand(self, vpip: bool, profit_bb: float) -> None:
         """Record the result of one hand."""

@@ -11,49 +11,47 @@ export const TurnTimer: FC<TurnTimerProps> = ({ secondsLeft, total = 30 }) => {
 
   const pct = Math.max(0, secondsLeft / total)
   const urgent = secondsLeft <= 5
-  const color = urgent ? '#ef4444' : secondsLeft <= 10 ? '#f59e0b' : '#22c55e'
+  const color = urgent ? '#f43f5e' : secondsLeft <= 10 ? '#fbbf24' : '#34d399'
 
   return (
-    <div
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: 10,
-        padding: '6px 16px',
-        background: 'rgba(0,0,0,0.6)',
-        borderRadius: 12,
-        backdropFilter: 'blur(4px)',
-      }}
-    >
-      {/* Circular progress */}
-      <svg width={36} height={36} viewBox="0 0 36 36">
+    <div style={{
+      display: 'flex',
+      alignItems: 'center',
+      gap: 8,
+      padding: '8px 16px',
+      background: 'rgba(9,9,11,0.7)',
+      backdropFilter: 'blur(16px)',
+      borderRadius: 14,
+      border: '1px solid var(--border)',
+    }}>
+      <svg width={32} height={32} viewBox="0 0 36 36">
         <circle
-          cx={18} cy={18} r={15}
+          cx={18} cy={18} r={14}
           fill="none"
-          stroke="rgba(255,255,255,0.1)"
-          strokeWidth={3}
+          stroke="rgba(255,255,255,0.06)"
+          strokeWidth={2.5}
         />
         <motion.circle
-          cx={18} cy={18} r={15}
+          cx={18} cy={18} r={14}
           fill="none"
           stroke={color}
-          strokeWidth={3}
+          strokeWidth={2.5}
           strokeLinecap="round"
-          strokeDasharray={94.25}
-          strokeDashoffset={94.25 * (1 - pct)}
+          strokeDasharray={87.96}
+          strokeDashoffset={87.96 * (1 - pct)}
           transform="rotate(-90 18 18)"
-          animate={{ strokeDashoffset: 94.25 * (1 - pct) }}
+          animate={{ strokeDashoffset: 87.96 * (1 - pct) }}
           transition={{ duration: 0.3 }}
         />
       </svg>
 
       <motion.span
         style={{
-          fontSize: 18,
+          fontSize: 16,
           fontWeight: 700,
           fontFamily: 'var(--font-mono)',
           color,
-          minWidth: 28,
+          minWidth: 24,
           textAlign: 'center',
         }}
         animate={urgent ? { scale: [1, 1.15, 1] } : {}}

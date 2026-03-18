@@ -4,10 +4,10 @@ import type { ActionLogEntry } from '../types'
 
 const ACTION_COLORS: Record<string, string> = {
   fold: '#6b7280',
-  check: '#e5e7eb',
-  call: '#10b981',
-  raise: '#f59e0b',
-  all_in: '#ef4444',
+  check: '#d1d5db',
+  call: '#34d399',
+  raise: '#fbbf24',
+  all_in: '#f43f5e',
 }
 
 const STREET_LABELS: Record<string, string> = {
@@ -40,7 +40,6 @@ export const ActionLine: FC<ActionLineProps> = ({ actionLog }) => {
 
   if (actionLog.length === 0) return null
 
-  // Group by street
   const groups: { street: string; board?: string[]; actions: ActionLogEntry[] }[] = []
   for (const entry of actionLog) {
     if (entry.type === 'street') {
@@ -51,103 +50,85 @@ export const ActionLine: FC<ActionLineProps> = ({ actionLog }) => {
   }
 
   return (
-    <div
-      style={{
-        width: 200,
-        height: '60vh',
-        background: 'rgba(0, 0, 0, 0.6)',
-        borderRadius: 12,
-        border: '1px solid rgba(255, 255, 255, 0.1)',
-        backdropFilter: 'blur(8px)',
-        display: 'flex',
-        flexDirection: 'column',
-        overflow: 'hidden',
-      }}
-    >
-      <div
-        style={{
-          padding: '10px 14px',
-          fontSize: 13,
-          fontWeight: 700,
-          color: 'var(--text-primary)',
-          borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
-        }}
-      >
-        📋 行动记录
+    <div style={{
+      width: 190,
+      height: '58vh',
+      background: 'rgba(9, 9, 11, 0.6)',
+      backdropFilter: 'blur(20px)',
+      borderRadius: 16,
+      border: '1px solid var(--border)',
+      display: 'flex',
+      flexDirection: 'column',
+      overflow: 'hidden',
+    }}>
+      <div style={{
+        padding: '12px 16px',
+        fontSize: 12,
+        fontWeight: 700,
+        color: 'var(--text-secondary)',
+        borderBottom: '1px solid var(--border)',
+        letterSpacing: '0.04em',
+        textTransform: 'uppercase',
+      }}>
+        行动记录
       </div>
-      <div
-        ref={scrollRef}
-        style={{
-          flex: 1,
-          overflowY: 'auto',
-          padding: '8px 12px',
-        }}
-      >
+      <div ref={scrollRef} style={{ flex: 1, overflowY: 'auto', padding: '8px 14px' }}>
         {groups.map((group, gi) => (
-          <div key={gi} style={{ marginBottom: 8 }}>
-            {/* Street header */}
-            <div
-              style={{
-                fontSize: 11,
-                fontWeight: 700,
-                color: '#94a3b8',
-                textTransform: 'uppercase',
-                marginBottom: 4,
-                display: 'flex',
-                alignItems: 'center',
-                gap: 6,
-              }}
-            >
+          <div key={gi} style={{ marginBottom: 10 }}>
+            <div style={{
+              fontSize: 10,
+              fontWeight: 700,
+              color: 'var(--text-muted)',
+              textTransform: 'uppercase',
+              marginBottom: 4,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+              letterSpacing: '0.06em',
+            }}>
               <span>{STREET_LABELS[group.street] ?? group.street}</span>
               {group.board && group.board.length > 0 && (
-                <span style={{ fontSize: 10, color: '#64748b', fontWeight: 400 }}>
-                  [{group.board.join(' ')}]
+                <span style={{ fontSize: 9, color: 'var(--text-muted)', fontWeight: 400, opacity: 0.6 }}>
+                  {group.board.join(' ')}
                 </span>
               )}
             </div>
-            {/* Actions */}
             {group.actions.map((a, ai) => (
               <motion.div
                 key={ai}
-                initial={{ opacity: 0, x: -10 }}
+                initial={{ opacity: 0, x: -8 }}
                 animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.2 }}
+                transition={{ duration: 0.15 }}
                 style={{
-                  fontSize: 12,
-                  padding: '2px 0',
+                  fontSize: 11,
+                  padding: '3px 0',
                   display: 'flex',
                   alignItems: 'center',
                   gap: 6,
                 }}
               >
-                <span style={{ color: 'var(--text-muted)', minWidth: 40 }}>
+                <span style={{ color: 'var(--text-muted)', minWidth: 36, fontSize: 10 }}>
                   {a.name}
                 </span>
-                <span
-                  style={{
-                    color: ACTION_COLORS[a.action ?? ''] ?? '#e5e7eb',
-                    fontWeight: 600,
-                  }}
-                >
+                <span style={{
+                  color: ACTION_COLORS[a.action ?? ''] ?? '#d1d5db',
+                  fontWeight: 600,
+                }}>
                   {ACTION_LABELS[a.action ?? ''] ?? a.action}
                 </span>
                 {a.amount != null && a.amount > 0 && (
-                  <span
-                    style={{
-                      fontSize: 11,
-                      color: '#94a3b8',
-                      fontFamily: 'var(--font-mono)',
-                    }}
-                  >
+                  <span style={{
+                    fontSize: 10,
+                    color: 'var(--text-muted)',
+                    fontFamily: 'var(--font-mono)',
+                  }}>
                     {a.amount}
                   </span>
                 )}
               </motion.div>
             ))}
             {group.actions.length === 0 && (
-              <div style={{ fontSize: 11, color: '#475569', fontStyle: 'italic' }}>
-                ...
-              </div>
+              <div style={{ fontSize: 10, color: 'var(--text-muted)', opacity: 0.4 }}>···</div>
             )}
           </div>
         ))}

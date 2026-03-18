@@ -215,7 +215,15 @@ class AIAgent:
         from . import engine_bridge
 
         if engine_bridge.is_available() and engine_bridge._solver is not None:
-            # Use C++ subgame solver (only when blueprint is loaded)
+            # More iterations on later streets where decisions matter more
+            iters_by_street = {
+                "PREFLOP": 2000,
+                "FLOP": 5000,
+                "TURN": 10000,
+                "RIVER": 15000,
+            }
+            iterations = iters_by_street.get(ctx.street, 5000)
+
             probs = engine_bridge.solve_subgame(
                 hole_cards=ctx.hole_cards[:2],
                 board=ctx.board,
@@ -223,9 +231,12 @@ class AIAgent:
                 current_bet=ctx.current_bet,
                 my_chips=ctx.my_chips,
                 opp_chips=max(ctx.pot, 200),  # estimate
-                iterations=200,
+                iterations=iterations,
             )
-            return engine_bridge.pick_action(probs, valid_actions, ctx)
+            result = engine_bridge.pick_action(probs, valid_actions, ctx)
+            result["_iterations"] = iterations
+            result["_probs"] = [round(p, 4) for p in probs]
+            return result
         else:
             # No blueprint — use enhanced medium strategy with tighter ranges
             return self._decide_medium(ctx, valid_actions)

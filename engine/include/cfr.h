@@ -70,6 +70,8 @@ public:
         double dcfr_alpha = 1.5;   // positive regret discount: t^α / (t^α + 1)
         double dcfr_beta  = 0.0;   // negative regret discount: t^β / (t^β + 1)
         double dcfr_gamma = 2.0;   // strategy sum discount:    (t / (t+1))^γ
+        int log_every = 10000;          // log progress every N iterations (0 = only at checkpoints)
+        std::string log_file;           // path to training log file (empty = no file logging)
         HandAbstraction::Config abstraction_config;
         GameTreeBuilder::Config tree_config;
     };

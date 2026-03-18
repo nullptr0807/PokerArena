@@ -8,6 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from .ws import router as ws_router
 from .stats import router as stats_router
+from .analyze import router as analyze_router
 
 app = FastAPI(
     title="PokerArena",
@@ -25,6 +26,7 @@ app.add_middleware(
 
 app.include_router(ws_router)
 app.include_router(stats_router)
+app.include_router(analyze_router)
 
 
 @app.get("/health")
