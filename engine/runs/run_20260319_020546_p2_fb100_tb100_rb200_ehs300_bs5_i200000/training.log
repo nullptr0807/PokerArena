@@ -1,0 +1,32 @@
+
+══════════════════════════════════════════════════
+[2026-03-19 02:05:53] Training started
+  Players:        2
+  Target iters:   200000
+  Remaining:      200000
+  Starting from:  0
+  Checkpoint:     every 100000
+  Log interval:   every 20000
+  Variant:        CFR+
+  Flop buckets:   100
+  Turn buckets:   100
+  River buckets:  200
+  Bet sizes:      [0.25x, 0.5x, 0.75x, 1x, 1.5x]
+══════════════════════════════════════════════════
+[2026-03-19 02:05:56] [10.0%] Iter 20000 | InfoSets: 1774261 | 5863 it/s | Elapsed: 3.4s | ETA: 0h0m30s | Mem: ~270.7MB
+[2026-03-19 02:05:59] [20.0%] Iter 40000 | InfoSets: 2883656 | 6590 it/s | Elapsed: 6.1s | ETA: 0h0m24s | Mem: ~440.0MB
+[2026-03-19 02:06:02] [30.0%] Iter 60000 | InfoSets: 3834757 | 6549 it/s | Elapsed: 9.2s | ETA: 0h0m21s | Mem: ~585.1MB
+[2026-03-19 02:06:05] [40.0%] Iter 80000 | InfoSets: 4694552 | 6585 it/s | Elapsed: 12.1s | ETA: 0h0m18s | Mem: ~716.3MB
+[2026-03-19 02:06:08] [50.0%] Iter 100000 | InfoSets: 5487928 | 6623 it/s | Elapsed: 15.1s | ETA: 0h0m15s | Mem: ~837.4MB
+[2026-03-19 02:06:09] Checkpoint saved: runs/run_20260319_020546_p2_fb100_tb100_rb200_ehs300_bs5_i200000/checkpoint_100000.bin
+[2026-03-19 02:06:12] [60.0%] Iter 120000 | InfoSets: 6252471 | 6218 it/s | Elapsed: 19.3s | ETA: 0h0m12s | Mem: ~954.1MB
+[2026-03-19 02:06:16] [70.0%] Iter 140000 | InfoSets: 6967971 | 6087 it/s | Elapsed: 23.0s | ETA: 0h0m9s | Mem: ~1063.2MB
+[2026-03-19 02:06:19] [80.0%] Iter 160000 | InfoSets: 7642556 | 6157 it/s | Elapsed: 26.0s | ETA: 0h0m6s | Mem: ~1166.2MB
+[2026-03-19 02:06:22] [90.0%] Iter 180000 | InfoSets: 8280563 | 6195 it/s | Elapsed: 29.1s | ETA: 0h0m3s | Mem: ~1263.5MB
+[2026-03-19 02:06:25] [100.0%] Iter 200000 | InfoSets: 8915284 | 6208 it/s | Elapsed: 32.2s | ETA: 0h0m0s | Mem: ~1360.4MB
+[2026-03-19 02:06:27] Checkpoint saved: runs/run_20260319_020546_p2_fb100_tb100_rb200_ehs300_bs5_i200000/checkpoint_200000.bin
+[2026-03-19 02:06:27] Training complete!
+  Total iterations: 200000
+  Info sets:        8915284
+  Total time:       0h0m33s
+  Avg speed:        5913 it/s

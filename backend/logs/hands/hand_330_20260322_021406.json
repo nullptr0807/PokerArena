@@ -1,0 +1,128 @@
+{
+  "hand_number": 330,
+  "num_players": 2,
+  "button": 1,
+  "board": [
+    null,
+    null,
+    null,
+    null,
+    null
+  ],
+  "players": [
+    {
+      "index": 0,
+      "name": "You",
+      "hole_cards": [
+        25,
+        42
+      ],
+      "starting_chips": 324,
+      "difficulty": "human"
+    },
+    {
+      "index": 1,
+      "name": "AI 1",
+      "hole_cards": [
+        12,
+        5
+      ],
+      "starting_chips": 476,
+      "difficulty": "advanced"
+    }
+  ],
+  "action_log": [
+    {
+      "type": "street",
+      "street": "PREFLOP",
+      "board": []
+    },
+    {
+      "player": 1,
+      "name": "AI 1",
+      "action": "fold",
+      "amount": 0,
+      "street": "WAITING",
+      "timestamp": 1774106046.931778
+    }
+  ],
+  "debug_events": [
+    {
+      "type": "hand_start",
+      "hand_number": 330,
+      "button": 0,
+      "players": [
+        {
+          "index": 0,
+          "name": "You",
+          "chips": 321,
+          "hole_cards": [
+            25,
+            42
+          ],
+          "difficulty": "human"
+        },
+        {
+          "index": 1,
+          "name": "AI 1",
+          "chips": 476,
+          "hole_cards": [
+            12,
+            5
+          ],
+          "difficulty": "advanced"
+        }
+      ],
+      "timestamp": 1774106046.025614
+    },
+    {
+      "type": "ai_start",
+      "player": 1,
+      "name": "AI 1",
+      "difficulty": "advanced",
+      "street": "PREFLOP",
+      "hole_cards": [
+        12,
+        5
+      ],
+      "pot": 3,
+      "current_bet": 2,
+      "timestamp": 1774106046.025952
+    },
+    {
+      "type": "ai_stage",
+      "player": 1,
+      "stage": "blueprint_lookup",
+      "action_history": [],
+      "valid_actions": [
+        "fold",
+        "call",
+        "raise",
+        "all_in"
+      ],
+      "position": "early",
+      "timestamp": 1774106046.52823
+    },
+    {
+      "type": "ai_decision",
+      "player": 1,
+      "name": "AI 1",
+      "difficulty": "advanced",
+      "stage": "blueprint_lookup",
+      "action": "fold",
+      "amount": 0,
+      "compute_ms": 1,
+      "total_ms": 503,
+      "iterations": null,
+      "action_probs": null,
+      "hole_cards": [
+        12,
+        5
+      ],
+      "street": "PREFLOP",
+      "pot": 3,
+      "action_history": [],
+      "timestamp": 1774106046.528996
+    }
+  ]
+}

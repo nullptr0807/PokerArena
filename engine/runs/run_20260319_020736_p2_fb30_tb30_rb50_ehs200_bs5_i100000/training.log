@@ -1,0 +1,23 @@
+
+══════════════════════════════════════════════════
+[2026-03-19 02:07:39] Training started
+  Players:        2
+  Target iters:   100000
+  Remaining:      100000
+  Starting from:  0
+  Checkpoint:     every 100000
+  Log interval:   every 50000
+  Variant:        CFR+
+  Flop buckets:   30
+  Turn buckets:   30
+  River buckets:  50
+  Bet sizes:      [0.25x, 0.5x, 0.75x, 1x, 1.5x]
+══════════════════════════════════════════════════
+[2026-03-19 02:07:45] [50.0%] Iter 50000 | InfoSets: 2453985 | 7968 it/s | Elapsed: 6.3s | ETA: 0h0m6s | Mem: ~374.4MB
+[2026-03-19 02:07:52] [100.0%] Iter 100000 | InfoSets: 3815145 | 7554 it/s | Elapsed: 13.2s | ETA: 0h0m0s | Mem: ~582.1MB
+[2026-03-19 02:07:53] Checkpoint saved: runs/run_20260319_020736_p2_fb30_tb30_rb50_ehs200_bs5_i100000/checkpoint_100000.bin
+[2026-03-19 02:07:53] Training complete!
+  Total iterations: 100000
+  Info sets:        3815145
+  Total time:       0h0m14s
+  Avg speed:        7105 it/s

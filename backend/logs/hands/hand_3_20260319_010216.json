@@ -1,0 +1,218 @@
+{
+  "hand_number": 3,
+  "num_players": 2,
+  "button": 0,
+  "board": [
+    41,
+    17,
+    31,
+    null,
+    null
+  ],
+  "players": [
+    {
+      "index": 0,
+      "name": "You",
+      "hole_cards": [
+        41,
+        17
+      ],
+      "starting_chips": 406,
+      "difficulty": "human"
+    },
+    {
+      "index": 1,
+      "name": "AI 1",
+      "hole_cards": [
+        31,
+        30
+      ],
+      "starting_chips": 397,
+      "difficulty": "advanced"
+    }
+  ],
+  "action_log": [
+    {
+      "type": "street",
+      "street": "PREFLOP",
+      "board": []
+    },
+    {
+      "player": 0,
+      "name": "You",
+      "action": "call",
+      "amount": 0,
+      "street": "PREFLOP",
+      "timestamp": 1773842529.391022
+    },
+    {
+      "player": 1,
+      "name": "AI 1",
+      "action": "check",
+      "amount": 0,
+      "street": "FLOP",
+      "timestamp": 1773842531.096676
+    },
+    {
+      "type": "street",
+      "street": "FLOP",
+      "board": [
+        "Ts",
+        "6c",
+        "2d"
+      ]
+    },
+    {
+      "player": 0,
+      "name": "You",
+      "action": "raise",
+      "amount": 2,
+      "street": "FLOP",
+      "timestamp": 1773842534.840628
+    },
+    {
+      "player": 1,
+      "name": "AI 1",
+      "action": "fold",
+      "amount": 0,
+      "street": "WAITING",
+      "timestamp": 1773842536.54435
+    }
+  ],
+  "debug_events": [
+    {
+      "type": "hand_start",
+      "hand_number": 3,
+      "button": 1,
+      "players": [
+        {
+          "index": 0,
+          "name": "You",
+          "chips": 400,
+          "hole_cards": [
+            41,
+            17
+          ],
+          "difficulty": "human"
+        },
+        {
+          "index": 1,
+          "name": "AI 1",
+          "chips": 397,
+          "hole_cards": [
+            31,
+            30
+          ],
+          "difficulty": "advanced"
+        }
+      ],
+      "timestamp": 1773842527.107044
+    },
+    {
+      "type": "ai_start",
+      "player": 1,
+      "name": "AI 1",
+      "difficulty": "advanced",
+      "street": "PREFLOP",
+      "hole_cards": [
+        31,
+        30
+      ],
+      "pot": 4,
+      "current_bet": 2,
+      "timestamp": 1773842529.391563
+    },
+    {
+      "type": "ai_stage",
+      "player": 1,
+      "stage": "blueprint_lookup",
+      "action_history": [
+        "call"
+      ],
+      "valid_actions": [
+        "fold",
+        "check",
+        "raise",
+        "all_in"
+      ],
+      "position": "late",
+      "timestamp": 1773842529.8931131
+    },
+    {
+      "type": "ai_decision",
+      "player": 1,
+      "name": "AI 1",
+      "difficulty": "advanced",
+      "stage": "blueprint_lookup",
+      "action": "check",
+      "amount": 0,
+      "compute_ms": 0,
+      "total_ms": 1303,
+      "hole_cards": [
+        31,
+        30
+      ],
+      "street": "PREFLOP",
+      "pot": 4,
+      "action_history": [
+        "call"
+      ],
+      "timestamp": 1773842530.6948721
+    },
+    {
+      "type": "ai_start",
+      "player": 1,
+      "name": "AI 1",
+      "difficulty": "advanced",
+      "street": "FLOP",
+      "hole_cards": [
+        31,
+        30
+      ],
+      "pot": 6,
+      "current_bet": 2,
+      "timestamp": 1773842534.8411882
+    },
+    {
+      "type": "ai_stage",
+      "player": 1,
+      "stage": "blueprint_lookup",
+      "action_history": [
+        "call",
+        "check",
+        "raise_33"
+      ],
+      "valid_actions": [
+        "fold",
+        "call",
+        "raise",
+        "all_in"
+      ],
+      "position": "late",
+      "timestamp": 1773842535.342211
+    },
+    {
+      "type": "ai_decision",
+      "player": 1,
+      "name": "AI 1",
+      "difficulty": "advanced",
+      "stage": "blueprint_lookup",
+      "action": "fold",
+      "amount": 0,
+      "compute_ms": 0,
+      "total_ms": 1302,
+      "hole_cards": [
+        31,
+        30
+      ],
+      "street": "FLOP",
+      "pot": 6,
+      "action_history": [
+        "call",
+        "check",
+        "raise_33"
+      ],
+      "timestamp": 1773842536.142945
+    }
+  ]
+}

@@ -438,7 +438,7 @@ bool MCCFRTrainer::load(const std::string& path) {
     ifs.read(reinterpret_cast<char*>(&num_sets), sizeof(num_sets));
 
     info_sets_.clear();
-    info_sets_.reserve(num_sets);
+    // Don't reserve — let the map grow incrementally to avoid large contiguous allocation
 
     for (int64_t i = 0; i < num_sets; ++i) {
         InfoSetKey key;

@@ -355,8 +355,26 @@ double MCCFRTrainer::cfr_impl(int traverser, int64_t iteration) {
 }
 
 std::array<double, NUM_ACTIONS> MCCFRTrainer::query(const std::string& k) const {
-    // String-based query: hash the string key the same way engine_bridge uses it
-    // For now, uniform fallback — real queries should use query_u64
+    // String key format: "street:bucket:history"
+    // Parse and reconstruct the uint64 key
+    size_t p1 = k.find(':');
+    size_t p2 = k.find(':', p1 + 1);
+    if (p1 != std::string::npos && p2 != std::string::npos) {
+        int street = std::stoi(k.substr(0, p1));
+        int bucket = std::stoi(k.substr(p1 + 1, p2 - p1 - 1));
+        std::string history = k.substr(p2 + 1);
+        // FNV-1a hash of history
+        uint64_t h = 14695981039346656037ULL;
+        for (char c : history) {
+            h ^= static_cast<uint64_t>(c);
+            h *= 1099511628211ULL;
+        }
+        uint64_t key = (static_cast<uint64_t>(street) << 62)
+                     | (static_cast<uint64_t>(bucket & 0xFF) << 54)
+                     | (h & 0x003FFFFFFFFFFFFFULL);
+        return query_u64(key);
+    }
+    // Fallback: uniform
     std::array<double, NUM_ACTIONS> u{};
     std::fill(u.begin(), u.end(), 1.0 / NUM_ACTIONS);
     return u;
@@ -381,13 +399,120 @@ void MCCFRTrainer::save(const std::string& path) const {
     }
 }
 
+// ─── Blueprint reach & CBV for subgame solving ──────────────
+
+double MCCFRTrainer::compute_opponent_reach(
+    const std::array<int, 2>& opp_hole,
+    const std::vector<int>& board,
+    const std::string& history
+) const {
+    if (nodes_.empty()) return 1.0;
+
+    // Replay using the same state machine as CFR training.
+    // Opponent = player 1 (BB). Hero = player 0 (SB).
+    int street = 0;
+    int acting = 0; // preflop: SB acts first
+    int bets_this_street = 1; // preflop starts with BB's forced bet
+    std::string hist_so_far;
+    double reach = 1.0;
+
+    auto char_to_action = [](char c) -> int {
+        switch (c) {
+            case 'f': return 0; case 'k': return 1; case '3': return 2;
+            case '5': return 3; case '7': return 4; case 'p': return 5;
+            case 'x': return 6; case 'a': return 7;
+            default: return -1;
+        }
+    };
+
+    for (size_t pos = 0; pos < history.size(); ++pos) {
+        char c = history[pos];
+        if (c == '/') {
+            hist_so_far += '/';
+            continue; // street transition already handled by call action
+        }
+
+        int action = char_to_action(c);
+        if (action < 0) continue;
+
+        // If it's opponent's turn, multiply reach by blueprint probability
+        if (acting == 1) {
+            std::vector<int> partial_board;
+            int bc = (street == 0) ? 0 : (street == 1) ? 3 : (street == 2) ? 4 : 5;
+            if (bc > 0 && bc <= static_cast<int>(board.size())) {
+                partial_board.assign(board.begin(), board.begin() + bc);
+            }
+            int bucket = hand_to_bucket(opp_hole, partial_board);
+
+            uint64_t h = 14695981039346656037ULL;
+            for (char hc : hist_so_far) {
+                h ^= static_cast<uint64_t>(hc);
+                h *= 1099511628211ULL;
+            }
+            uint64_t key = (static_cast<uint64_t>(street) << 62)
+                         | (static_cast<uint64_t>(bucket & 0xFF) << 54)
+                         | (h & 0x003FFFFFFFFFFFFFULL);
+
+            auto strat = query_u64(key);
+            reach *= strat[action];
+            if (reach < 1e-12) return 0.0;
+        }
+
+        // Apply action — mirror apply_action from CFR
+        hist_so_far += c;
+
+        if (action == 0) {
+            // Fold → terminal
+            return reach;
+        } else if (action == 1) {
+            // Check/call
+            if (bets_this_street > 0 || acting == 1) {
+                // Action closes: call (bets>0) or second check (acting==1, bets==0)
+                // → street advances
+                street++;
+                bets_this_street = 0;
+                acting = 0; // post-flop: player 0 acts first
+                hist_so_far += '/';
+            } else {
+                // First check (acting==0, bets==0) → switch to other player
+                acting = 1;
+            }
+        } else {
+            // Bet/raise (actions 2-7)
+            bets_this_street++;
+            acting = 1 - acting;
+        }
+    }
+
+    return reach;
+}
+
+double MCCFRTrainer::compute_opponent_cbv(
+    const std::array<int, 2>& opp_hole,
+    const std::vector<int>& board,
+    const std::string& history,
+    int pot,
+    int rollouts
+) const {
+    if (nodes_.empty()) return 0.0;
+
+    // Approximate CBV via MC rollouts:
+    // For each rollout, sample a hero hand, complete the board,
+    // and estimate what opponent gets under blueprint play from this node.
+    // Simplified: use EHS-based estimate since full tree traversal is expensive.
+    double opp_ehs = compute_ehs(opp_hole, board, rollouts);
+    // CBV ≈ opponent's equity share of pot minus their investment
+    // This is a rough approximation; full CBV requires blueprint tree traversal
+    return opp_ehs * pot - (1.0 - opp_ehs) * pot;
+}
+
 void MCCFRTrainer::load(const std::string& path) {
     std::ifstream in(path, std::ios::binary);
     if (!in) return;
     uint64_t n = 0;
     in.read(reinterpret_cast<char*>(&n), sizeof(n));
     nodes_.clear();
-    nodes_.reserve(n);
+    // Grow incrementally to avoid large contiguous allocation failures
     for (uint64_t i = 0; i < n; ++i) {
         uint64_t key = 0;
         in.read(reinterpret_cast<char*>(&key), sizeof(key));

@@ -16,7 +16,13 @@ PYBIND11_MODULE(poker_ai_py, m) {
         .def("query", &poker::MCCFRTrainer::query, py::arg("info_set_key"))
         .def("save", &poker::MCCFRTrainer::save, py::arg("path"))
         .def("load", &poker::MCCFRTrainer::load, py::arg("path"))
-        .def("num_info_sets", &poker::MCCFRTrainer::num_info_sets);
+        .def("num_info_sets", &poker::MCCFRTrainer::num_info_sets)
+        .def("query_u64", &poker::MCCFRTrainer::query_u64, py::arg("key"))
+        .def("compute_reach", &poker::MCCFRTrainer::compute_opponent_reach,
+             py::arg("opp_hole"), py::arg("board"), py::arg("history"))
+        .def("compute_cbv", &poker::MCCFRTrainer::compute_opponent_cbv,
+             py::arg("opp_hole"), py::arg("board"), py::arg("history"),
+             py::arg("pot"), py::arg("rollouts") = 500);
 
     py::class_<poker::SubgameState>(m, "SubgameState")
         .def(py::init<>())

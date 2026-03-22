@@ -1,0 +1,79 @@
+{
+  "hand_number": 6,
+  "num_players": 2,
+  "button": 0,
+  "board": [
+    null,
+    null,
+    null,
+    null,
+    null
+  ],
+  "players": [
+    {
+      "index": 0,
+      "name": "You",
+      "hole_cards": [
+        0,
+        48
+      ],
+      "starting_chips": 399,
+      "difficulty": "human"
+    },
+    {
+      "index": 1,
+      "name": "AI 1",
+      "hole_cards": [
+        41,
+        6
+      ],
+      "starting_chips": 398,
+      "difficulty": "advanced"
+    }
+  ],
+  "action_log": [
+    {
+      "type": "street",
+      "street": "PREFLOP",
+      "board": []
+    },
+    {
+      "player": 0,
+      "name": "You",
+      "action": "fold",
+      "amount": 0,
+      "street": "WAITING",
+      "timestamp": 1773842114.241318
+    }
+  ],
+  "debug_events": [
+    {
+      "type": "hand_start",
+      "hand_number": 6,
+      "button": 1,
+      "players": [
+        {
+          "index": 0,
+          "name": "You",
+          "chips": 399,
+          "hole_cards": [
+            0,
+            48
+          ],
+          "difficulty": "human"
+        },
+        {
+          "index": 1,
+          "name": "AI 1",
+          "chips": 395,
+          "hole_cards": [
+            41,
+            6
+          ],
+          "difficulty": "advanced"
+        }
+      ],
+      "timestamp": 1773842112.1913059
+    }
+  ]
+}

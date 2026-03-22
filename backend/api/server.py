@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+import logging
+from contextlib import asynccontextmanager
+
 import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -10,10 +13,26 @@ from .ws import router as ws_router
 from .stats import router as stats_router
 from .analyze import router as analyze_router
 
+logger = logging.getLogger("pokerarena")
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Startup: verify engine availability."""
+    from ai import engine_bridge
+
+    if engine_bridge.is_available():
+        logger.info(f"C++ engine ready — solver: {engine_bridge._solver is not None}")
+    else:
+        logger.info("C++ engine not available — using heuristic AI")
+
+    yield
+
 app = FastAPI(
     title="PokerArena",
     description="Texas Hold'em No-Limit Cash Game — Human vs AI",
     version="0.1.0",
+    lifespan=lifespan,
 )
 
 app.add_middleware(
@@ -31,7 +50,13 @@ app.include_router(analyze_router)
 
 @app.get("/health")
 async def health() -> dict:
-    return {"status": "ok"}
+    from ai import engine_bridge
+    return {
+        "status": "ok",
+        "engine_available": engine_bridge.is_available(),
+        "blueprint_loaded": engine_bridge._solver is not None,
+        "info_sets": engine_bridge._trainer.num_info_sets() if engine_bridge._trainer else 0,
+    }
 
 
 @app.get("/api/difficulties")

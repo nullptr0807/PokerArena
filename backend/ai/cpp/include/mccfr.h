@@ -74,6 +74,46 @@ public:
     /** Number of unique info sets discovered. */
     size_t num_info_sets() const { return nodes_.size(); }
 
+    /**
+     * Compute blueprint reach probability for an opponent hand
+     * along a given action history.
+     *
+     * Replays the blueprint actions for the given hand, multiplying
+     * the probability that the opponent takes each action in the history.
+     *
+     * @param opp_hole    Opponent's hole cards
+     * @param board       Community cards visible so far
+     * @param history     Action history string using blueprint action chars (f,k,3,5,7,p,x,a)
+     * @return reach probability in [0, 1]
+     */
+    double compute_opponent_reach(
+        const std::array<int, 2>& opp_hole,
+        const std::vector<int>& board,
+        const std::string& history
+    ) const;
+
+    /**
+     * Compute counterfactual value for an opponent hand at a node.
+     *
+     * Approximates the expected value the opponent gets under the
+     * blueprint strategy at the given node, via Monte Carlo rollouts.
+     *
+     * @param opp_hole    Opponent's hole cards
+     * @param board       Community cards
+     * @param history     Action history to reach this node
+     * @param hero_hole   Hero's hole cards (for showdown eval)
+     * @param pot         Current pot size
+     * @param rollouts    MC samples for CBV estimation
+     * @return Estimated counterfactual value for opponent
+     */
+    double compute_opponent_cbv(
+        const std::array<int, 2>& opp_hole,
+        const std::vector<int>& board,
+        const std::string& history,
+        int pot,
+        int rollouts = 500
+    ) const;
+
 private:
     int num_players_;
     std::unordered_map<uint64_t, InfoNode> nodes_;

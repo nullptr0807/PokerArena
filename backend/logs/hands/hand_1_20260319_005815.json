@@ -1,0 +1,456 @@
+{
+  "hand_number": 1,
+  "num_players": 2,
+  "button": 1,
+  "board": [
+    34,
+    30,
+    5,
+    50,
+    17
+  ],
+  "players": [
+    {
+      "index": 0,
+      "name": "You",
+      "hole_cards": [
+        34,
+        30
+      ],
+      "starting_chips": 400,
+      "difficulty": "human"
+    },
+    {
+      "index": 1,
+      "name": "AI 1",
+      "hole_cards": [
+        5,
+        50
+      ],
+      "starting_chips": 438,
+      "difficulty": "advanced"
+    }
+  ],
+  "action_log": [
+    {
+      "type": "street",
+      "street": "PREFLOP",
+      "board": []
+    },
+    {
+      "player": 1,
+      "name": "AI 1",
+      "action": "call",
+      "amount": 0,
+      "street": "PREFLOP",
+      "timestamp": 1773842271.585419
+    },
+    {
+      "player": 0,
+      "name": "You",
+      "action": "check",
+      "amount": 0,
+      "street": "FLOP",
+      "timestamp": 1773842273.9583209
+    },
+    {
+      "type": "street",
+      "street": "FLOP",
+      "board": [
+        "Qc",
+        "9d",
+        "3s"
+      ]
+    },
+    {
+      "player": 1,
+      "name": "AI 1",
+      "action": "check",
+      "amount": 0,
+      "street": "FLOP",
+      "timestamp": 1773842275.6628458
+    },
+    {
+      "player": 0,
+      "name": "You",
+      "action": "check",
+      "amount": 0,
+      "street": "TURN",
+      "timestamp": 1773842282.8911302
+    },
+    {
+      "type": "street",
+      "street": "TURN",
+      "board": [
+        "Qc",
+        "9d",
+        "3s",
+        "Ks"
+      ]
+    },
+    {
+      "player": 1,
+      "name": "AI 1",
+      "action": "raise",
+      "amount": 2,
+      "street": "TURN",
+      "timestamp": 1773842284.597245
+    },
+    {
+      "player": 0,
+      "name": "You",
+      "action": "call",
+      "amount": 0,
+      "street": "RIVER",
+      "timestamp": 1773842289.3081641
+    },
+    {
+      "type": "street",
+      "street": "RIVER",
+      "board": [
+        "Qc",
+        "9d",
+        "3s",
+        "Ks",
+        "4h"
+      ]
+    },
+    {
+      "player": 1,
+      "name": "AI 1",
+      "action": "raise",
+      "amount": 5,
+      "street": "RIVER",
+      "timestamp": 1773842291.013846
+    },
+    {
+      "player": 0,
+      "name": "You",
+      "action": "raise",
+      "amount": 15,
+      "street": "RIVER",
+      "timestamp": 1773842293.3249202
+    },
+    {
+      "player": 1,
+      "name": "AI 1",
+      "action": "call",
+      "amount": 0,
+      "street": "WAITING",
+      "timestamp": 1773842295.0309482
+    }
+  ],
+  "debug_events": [
+    {
+      "type": "hand_start",
+      "hand_number": 1,
+      "button": 0,
+      "players": [
+        {
+          "index": 0,
+          "name": "You",
+          "chips": 400,
+          "hole_cards": [
+            34,
+            30
+          ],
+          "difficulty": "human"
+        },
+        {
+          "index": 1,
+          "name": "AI 1",
+          "chips": 400,
+          "hole_cards": [
+            5,
+            50
+          ],
+          "difficulty": "advanced"
+        }
+      ],
+      "timestamp": 1773842269.877409
+    },
+    {
+      "type": "ai_start",
+      "player": 1,
+      "name": "AI 1",
+      "difficulty": "advanced",
+      "street": "PREFLOP",
+      "hole_cards": [
+        5,
+        50
+      ],
+      "pot": 3,
+      "current_bet": 2,
+      "timestamp": 1773842269.8790421
+    },
+    {
+      "type": "ai_stage",
+      "player": 1,
+      "stage": "blueprint_lookup",
+      "action_history": [],
+      "valid_actions": [
+        "fold",
+        "call",
+        "raise",
+        "all_in"
+      ],
+      "position": "early",
+      "timestamp": 1773842270.381023
+    },
+    {
+      "type": "ai_decision",
+      "player": 1,
+      "name": "AI 1",
+      "difficulty": "advanced",
+      "stage": "blueprint_lookup",
+      "action": "call",
+      "amount": 0,
+      "compute_ms": 1,
+      "total_ms": 1304,
+      "hole_cards": [
+        5,
+        50
+      ],
+      "street": "PREFLOP",
+      "pot": 3,
+      "action_history": [],
+      "timestamp": 1773842271.183182
+    },
+    {
+      "type": "ai_start",
+      "player": 1,
+      "name": "AI 1",
+      "difficulty": "advanced",
+      "street": "FLOP",
+      "hole_cards": [
+        5,
+        50
+      ],
+      "pot": 4,
+      "current_bet": 0,
+      "timestamp": 1773842273.958761
+    },
+    {
+      "type": "ai_stage",
+      "player": 1,
+      "stage": "blueprint_lookup",
+      "action_history": [
+        "call",
+        "check"
+      ],
+      "valid_actions": [
+        "fold",
+        "check",
+        "raise",
+        "all_in"
+      ],
+      "position": "early",
+      "timestamp": 1773842274.46031
+    },
+    {
+      "type": "ai_decision",
+      "player": 1,
+      "name": "AI 1",
+      "difficulty": "advanced",
+      "stage": "blueprint_lookup",
+      "action": "check",
+      "amount": 0,
+      "compute_ms": 0,
+      "total_ms": 1303,
+      "hole_cards": [
+        5,
+        50
+      ],
+      "street": "FLOP",
+      "pot": 4,
+      "action_history": [
+        "call",
+        "check"
+      ],
+      "timestamp": 1773842275.261305
+    },
+    {
+      "type": "ai_start",
+      "player": 1,
+      "name": "AI 1",
+      "difficulty": "advanced",
+      "street": "TURN",
+      "hole_cards": [
+        5,
+        50
+      ],
+      "pot": 4,
+      "current_bet": 0,
+      "timestamp": 1773842282.8917792
+    },
+    {
+      "type": "ai_stage",
+      "player": 1,
+      "stage": "subgame_solve",
+      "action_history": [
+        "call",
+        "check",
+        "check",
+        "check"
+      ],
+      "valid_actions": [
+        "fold",
+        "check",
+        "raise",
+        "all_in"
+      ],
+      "position": "early",
+      "timestamp": 1773842283.3934898
+    },
+    {
+      "type": "ai_decision",
+      "player": 1,
+      "name": "AI 1",
+      "difficulty": "advanced",
+      "stage": "subgame_solve",
+      "action": "raise",
+      "amount": 2,
+      "compute_ms": 0,
+      "total_ms": 1304,
+      "hole_cards": [
+        5,
+        50
+      ],
+      "street": "TURN",
+      "pot": 4,
+      "action_history": [
+        "call",
+        "check",
+        "check",
+        "check"
+      ],
+      "timestamp": 1773842284.195287
+    },
+    {
+      "type": "ai_start",
+      "player": 1,
+      "name": "AI 1",
+      "difficulty": "advanced",
+      "street": "RIVER",
+      "hole_cards": [
+        5,
+        50
+      ],
+      "pot": 8,
+      "current_bet": 0,
+      "timestamp": 1773842289.308765
+    },
+    {
+      "type": "ai_stage",
+      "player": 1,
+      "stage": "subgame_solve",
+      "action_history": [
+        "call",
+        "check",
+        "check",
+        "check",
+        "raise_33",
+        "call"
+      ],
+      "valid_actions": [
+        "fold",
+        "check",
+        "raise",
+        "all_in"
+      ],
+      "position": "early",
+      "timestamp": 1773842289.810532
+    },
+    {
+      "type": "ai_decision",
+      "player": 1,
+      "name": "AI 1",
+      "difficulty": "advanced",
+      "stage": "subgame_solve",
+      "action": "raise",
+      "amount": 5,
+      "compute_ms": 1,
+      "total_ms": 1303,
+      "hole_cards": [
+        5,
+        50
+      ],
+      "street": "RIVER",
+      "pot": 8,
+      "action_history": [
+        "call",
+        "check",
+        "check",
+        "check",
+        "raise_33",
+        "call"
+      ],
+      "timestamp": 1773842290.6118479
+    },
+    {
+      "type": "ai_start",
+      "player": 1,
+      "name": "AI 1",
+      "difficulty": "advanced",
+      "street": "RIVER",
+      "hole_cards": [
+        5,
+        50
+      ],
+      "pot": 28,
+      "current_bet": 15,
+      "timestamp": 1773842293.325411
+    },
+    {
+      "type": "ai_stage",
+      "player": 1,
+      "stage": "subgame_solve",
+      "action_history": [
+        "call",
+        "check",
+        "check",
+        "check",
+        "raise_33",
+        "call",
+        "raise_33",
+        "raise_75"
+      ],
+      "valid_actions": [
+        "fold",
+        "call",
+        "raise",
+        "all_in"
+      ],
+      "position": "early",
+      "timestamp": 1773842293.826327
+    },
+    {
+      "type": "ai_decision",
+      "player": 1,
+      "name": "AI 1",
+      "difficulty": "advanced",
+      "stage": "subgame_solve",
+      "action": "call",
+      "amount": 0,
+      "compute_ms": 1,
+      "total_ms": 1303,
+      "hole_cards": [
+        5,
+        50
+      ],
+      "street": "RIVER",
+      "pot": 28,
+      "action_history": [
+        "call",
+        "check",
+        "check",
+        "check",
+        "raise_33",
+        "call",
+        "raise_33",
+        "raise_75"
+      ],
+      "timestamp": 1773842294.628176
+    }
+  ]
+}

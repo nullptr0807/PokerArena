@@ -24,6 +24,22 @@ try:
     import poker_ai_py  # type: ignore
 
     _engine_available = True
+    # Create trainer + solver immediately (solver works without blueprint)
+    _trainer = poker_ai_py.MCCFRTrainer(2)
+
+    # Auto-load blueprint from known locations
+    _blueprint_candidates = [
+        Path(__file__).parent / "blueprint.bin",          # backend/ai/blueprint.bin
+        _BUILD_DIR / "blueprint.bin",                     # backend/ai/cpp/build/blueprint.bin
+        _BUILD_DIR / "data" / "blueprint.bin",            # backend/ai/cpp/build/data/blueprint.bin
+    ]
+    for _bp_path in _blueprint_candidates:
+        if _bp_path.exists():
+            _trainer.load(str(_bp_path))
+            if _trainer.num_info_sets() > 0:
+                break
+
+    _solver = poker_ai_py.SubgameSolver(_trainer, 4)
 except ImportError:
     poker_ai_py = None
 
